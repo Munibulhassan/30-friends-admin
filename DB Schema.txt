@@ -1,0 +1,39 @@
+=============User=============
+userType: [buyer,]
+///buyer
+first_name
+last-name
+phone
+is_phone-verify
+email
+is_email-verify
+phone2
+referal_code
+own_code
+password
+is_verify
+status
+
+///vendor
+store_name
+first_name
+last-name
+email
+is_email-verify
+phone
+is_phone-verify
+phone2
+referal_code
+own_code
+password
+state
+city
+store_link
+is_verify
+status
+
+////login with google facebook appleId
+
+login
+
+email password
