@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 
+
 const tokengenerate = ({ user }) => {
   return (token = jwt.sign({ user }, process.env.SECRET, {
     expiresIn: "2h",
@@ -16,8 +17,9 @@ const verifytoken = (req, res, next) => {
     return res.status(403).send("A token is required for authentication");
   }
   try {
+  
     token = token.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.TOKEN_KEY);
+    const decoded = jwt.verify(token, process.env.SECRET);
 
     req.user = decoded;
   } catch (err) {
@@ -37,9 +39,10 @@ const verifyadmintoken = (req, res, next) => {
   }
   try {
     token = token.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.TOKEN_KEY);
-
-    if (decoded.user.usertype != 1) {
+    
+    const decoded = jwt.verify(token, process.env.SECRET);
+    
+    if (decoded.user.user_type != "admin") {
       res.status(200).send({ message: "Only admin have credentials" });
     }
     req.user = decoded;

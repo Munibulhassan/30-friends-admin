@@ -5,8 +5,11 @@ require("dotenv").config();
 app.use(bodyParser.json());
 const cors = require("cors");
 const mongoose = require("mongoose");
+const MONGOurl = process.env.MONGOURL
+
+
 mongoose.connect(
-  "mongodb://localhost:27017/turbo",
+  MONGOurl,
   {
     useNewUrlParser: true,
   },
@@ -52,10 +55,30 @@ const corsOptions = {
   credentials: true, //access-control-allow-credentials:true
   optionSuccessStatus: 200,
 };
+///login with google
+const session = require('express-session');
+const passport = require('passport');
+var userProfile;
+app.use(session({
+  resave: false,
+  saveUninitialized: true,
+  secret: 'SECRET' 
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.set('view engine', 'ejs');
+
+app.get('/success', (req, res) => res.send(userProfile));
+app.get('/error', (req, res) => res.send("error logging in"));
+
+///
+
+
 
 app.use(cors(corsOptions));
 //Routing
-
 app.use("/api", route);
 
 // app.use("/", (req, res, next) => {
