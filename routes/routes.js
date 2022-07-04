@@ -4,12 +4,15 @@ const auth = require('./auth')
 const product = require("./product");
 const category = require("./category")
 const store = require("./store.js")
-const payment = require("./payment.js")
+const payment = require("./payment.js");
+const order = require("./order");
 app.use("/auth", auth);
 app.use("/product",product)
 app.use("/category", category)
 app.use("/store", store)
 app.use("/payment", payment)
+app.use("/order", order)
+
 
 
 

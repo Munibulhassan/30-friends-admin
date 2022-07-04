@@ -85,7 +85,6 @@ app.use("/api", route);
 //   console.log(req.url);
 //   next();
 // });
-
 const url = process.env.PORT && 5000;
 app.listen(url, () => {
   console.log("Server is Running on port " + url);

@@ -5,8 +5,8 @@ const product = require("../models/product");
 
 exports.createProduct = async (req, res) => {
   try {
-    const { title,SKU, tags, description, price, stock, brand } = req.body;
-    if (!(title && SKU && tags && description && price && stock && brand)) {
+    const { title,SKU, tags, description, price, stock, brand ,vendor} = req.body;
+    if (!(title && SKU && tags && description && price && stock && brand && vendor)) {
       res
         .status(200)
         .send({ message: "All input is required", success: false });
@@ -75,8 +75,12 @@ exports.updateProduct = async (req, res) => {
       res.status(200).send({ message: "id is not specify", success: false });
     } else {
       product.findOne({ _id: id }, async (err, result) => {
+        
         if (!result) {
           res.status(200).send({ message: "No Data Exist", success: false });
+        }else if(req?.user?._id !=  result?.vendor){
+          res.status(200).send({ message: "Only Vendor of this product can update product details", success: false });
+          
         } else {
           req.body.image = JSON.parse(req.body.image);
           req.body.video = JSON.parse(req.body.video);
@@ -128,7 +132,12 @@ exports.deleteProduct = async (req, res) => {
       res.status(200).send({ message: "id is not specify", success: false });
     } else {
       product.findOne({ _id: id }, async (err, result) => {
+        if(req?.user?._id !=  result?.vendor){
+          res.status(200).send({ message: "Only Vendor of this product can update product details", success: false });
+          
+        } else
         if (result) {
+          
           result.image.map(async (item) => {
             await unlinkAsync(`uploads/product/` + item);
           });
@@ -164,6 +173,10 @@ exports.publishProduct = async (req, res) => {
       res.status(200).send({ message: "id is not specify", success: false });
     } else {
       product.findOne({ _id: id }, async (err, result) => {
+        if(req?.user?._id !=  result?.vendor){
+          res.status(200).send({ message: "Only Vendor of this product can update product details", success: false });
+          
+        } else
         if (result) {
           if (result.status == true) {
             res.status(200).send({

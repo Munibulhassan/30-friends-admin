@@ -25,6 +25,14 @@ exports.register = async (req, res) => {
       res.status(422).send({ message: "invlaid Email", success: false });
     } else {
       await registerSchema.validateAsync(req.body);
+      var result           = '';
+      var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      var charactersLength = characters.length;
+      for ( var i = 0; i < 5; i++ ) {
+        result += characters.charAt(Math.floor(Math.random() * 
+   charactersLength));
+     }
+     req.body.own_ref_code = result
       authentication.findOne({ email: email }, async (err, data) => {
         if (data) {
           req.body.email = email;
@@ -32,8 +40,12 @@ exports.register = async (req, res) => {
           var salt = bcrypt.genSaltSync(10);
           req.body.password = bcrypt.hashSync(req.body.password, salt);
           authentication.updateOne({ email }, req.body, (err, result) => {
+            req.body.password = ""
+
             res.status(200).json({
-              message: "User Register Successfully",
+              message: "User Registered Successfully",
+              token: tokengenerate({ user: req.body}),
+
               success: true,
             });
           });
@@ -139,7 +151,7 @@ exports.updateProfile = async (req, res) => {
 exports.emailVerify = async (req, res) => {
   try {
     const { email, otp } = req.body;
-
+console.log(email)
     if (otp) {
       authentication.findOne(
         { email: email, e_otp: otp, is_email_verify: false },
@@ -171,27 +183,47 @@ exports.emailVerify = async (req, res) => {
         }
       );
     } else {
+
       let OTP = Math.floor(1000 + Math.random() * 9000);
+      let transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false,
+        requireTLS: false,
 
-      // const MAIL_SETTINGS= {
-      //   service: 'gmail',
-      //   auth: {
-      //     user: process.env.email,
-      //     pass: process.env.password,
-      //   },
-      // },
-      // const transporter = nodemailer.createTransport(MAIL_SETTINGS);
-
+        auth: {
+          user: process.env.email, // generated ethereal user
+          pass: process.env.password, // generated ethereal password
+        },
+      });
+      const mailOption = {
+        from: process.env.email,
+        to: email, // sender address
+        subject: "Invoice for your order", // Subject line
+        html: `<p> Your Vrificaton  code is  <b> ${OTP}</b></p>`
+      };
+      
       authentication.findOne({ email: email }, async (err, result) => {
         if (result?.is_email_verify) {
           res.status(200).send({
             message: "Email already verified",
-            success: false,
+            success: true,
           });
         } else {
-          
+          await transporter.sendMail(mailOption, (err, info) => {
+            if (err) {
+              res.send(err);
+            } else {
+              res.status(200).send({
+                message: "OTP send to your email address",
+                success: true,
+              });
+            }})    
         }
-      });
+      })
+      
+
+     
     }
   } catch (err) {
     res.status(400).json({

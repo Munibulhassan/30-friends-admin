@@ -42,6 +42,7 @@ const product = mongoose.Schema(
     video: {
       type: Array,
     },
+    vendor:{ type: mongoose.Schema.Types.ObjectId, ref: "users" }
   },
   { timestamps: true }
 );
