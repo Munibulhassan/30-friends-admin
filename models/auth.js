@@ -6,6 +6,7 @@ const auth = mongoose.Schema(
     first_name: String,
     last_name: String,
     googleId:String,
+    facebookId:String,
     userId: String,
     is_email_verify: { type: Boolean, default: false },
     is_phone_verify: { type: Boolean, default: false },

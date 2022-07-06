@@ -5,8 +5,20 @@ const product = require("../models/product");
 
 exports.createProduct = async (req, res) => {
   try {
-    const { title,SKU, tags, description, price, stock, brand ,vendor} = req.body;
-    if (!(title && SKU && tags && description && price && stock && brand && vendor)) {
+    const { title, SKU, tags, description, price, stock, brand, vendor } =
+      req.body;
+    if (
+      !(
+        title &&
+        SKU &&
+        tags &&
+        description &&
+        price &&
+        stock &&
+        brand &&
+        vendor
+      )
+    ) {
       res
         .status(200)
         .send({ message: "All input is required", success: false });
@@ -43,10 +55,11 @@ exports.createProduct = async (req, res) => {
 
 exports.getProduct = async (req, res) => {
   try {
-    const { page, limit }= req.query;
+    const { page, limit } = req.query;
 
     const data = await product
       .find(req.query)
+      .populate({ path: "categories" })
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec();
@@ -75,15 +88,16 @@ exports.updateProduct = async (req, res) => {
       res.status(200).send({ message: "id is not specify", success: false });
     } else {
       product.findOne({ _id: id }, async (err, result) => {
-        
         if (!result) {
           res.status(200).send({ message: "No Data Exist", success: false });
-        }else if(req?.user?._id !=  result?.vendor){
-          res.status(200).send({ message: "Only Vendor of this product can update product details", success: false });
-          
         } else {
-          req.body.image = JSON.parse(req.body.image);
-          req.body.video = JSON.parse(req.body.video);
+          if (req.body.image) {
+            req.body.image = JSON.parse(req.body.image);
+          }
+          if (req.body.video) {
+            req.body.video = JSON.parse(req.body.video);
+          }
+
           if (req.files) {
             req.files.map(async (item) => {
               const i = req.body.image.indexOf("");
@@ -132,12 +146,12 @@ exports.deleteProduct = async (req, res) => {
       res.status(200).send({ message: "id is not specify", success: false });
     } else {
       product.findOne({ _id: id }, async (err, result) => {
-        if(req?.user?._id !=  result?.vendor){
-          res.status(200).send({ message: "Only Vendor of this product can update product details", success: false });
-          
-        } else
-        if (result) {
-          
+        if (req?.user?._id != result?.vendor) {
+          res.status(200).send({
+            message: "Only Vendor of this product can update product details",
+            success: false,
+          });
+        } else if (result) {
           result.image.map(async (item) => {
             await unlinkAsync(`uploads/product/` + item);
           });
@@ -173,30 +187,191 @@ exports.publishProduct = async (req, res) => {
       res.status(200).send({ message: "id is not specify", success: false });
     } else {
       product.findOne({ _id: id }, async (err, result) => {
-        if(req?.user?._id !=  result?.vendor){
-          res.status(200).send({ message: "Only Vendor of this product can update product details", success: false });
-          
-        } else
-        if (result) {
+        if (req?.user?._id != result?.vendor) {
+          res.status(200).send({
+            message: "Only Vendor of this product can update product details",
+            success: false,
+          });
+        } else if (result) {
           if (result.status == true) {
             res.status(200).send({
               message: "Product Already published",
               success: false,
             });
           } else {
-            product.updateOne({ _id: id }, { status: "published" }, (err, val) => {
-              if (!val) {
-                res.status(200).send({ message: err.message, success: false });
-              } else {
-                res.status(200).send({
-                  message: "Product Published Successfully",
-                  success: true,
-                });
+            product.updateOne(
+              { _id: id },
+              { status: "published" },
+              (err, val) => {
+                if (!val) {
+                  res
+                    .status(200)
+                    .send({ message: err.message, success: false });
+                } else {
+                  res.status(200).send({
+                    message: "Product Published Successfully",
+                    success: true,
+                  });
+                }
               }
-            });
+            );
           }
         } else {
           res.status(200).end({ message: "Product Not exist", success: false });
+        }
+      });
+    }
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+const Comment = require("../models/comment");
+const { log } = require("console");
+const { resourceLimits } = require("worker_threads");
+
+exports.createcomment = async (req, res) => {
+  try {
+    const { text, rate, user } = req.body;
+    const Product = req.body.product
+    if (!(text && rate && user && Product)) {
+      res
+        .status(200)
+        .json({ message: "All input is required", success: false });
+    } else {
+      Comment.findOne({ user: user, product: Product }, async (err, result) => {
+        if (result) {
+          res.status(200).json({
+            message: "You already commented to this product",
+            success: false,
+          });
+        } else {
+          const comment = new Comment({
+            text: text,
+            rate: rate,
+            user: user,
+            product: Product,
+          });
+
+          product.updateOne(
+            { _id: Product },
+            { $inc: { comments: 1, "metrics.orders": 1 } },
+            async (err, update) => {
+              if (err) {
+                res.status(200).json({
+                  success: false,
+                  message: err.message,
+                });
+              } else {
+                await comment.save().then((data) => {
+                  res.status(200).json({
+                    success: true,
+                    message: "Product comment Successfully",
+                    data: data,
+                  });
+                });
+              }
+            }
+          );
+        }
+      });
+    }
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+exports.getcomment = async (req, res) => {
+  try {
+    Comment.find(req.query, (err, result) => {
+      if (result.length < 0) {
+        res.status(200).send({ message: "Data Not Exist", success: false });
+      } else {
+        res.status(200).send({
+          message: "Data get Successfully",
+          success: true,
+          data: result,
+        });
+      }
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+exports.updatecomment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(200).send({ message: "id is not specify", success: false });
+    } else {
+      Comment.findOne({ _id: id }, async (err, result) => {
+        if (!result) {
+          res.status(200).send({ message: "No Data Exist", success: false });
+        } else {
+          Comment.updateOne({ _id: id }, req.body, (err, result) => {
+            if (err) {
+              res.status(200).send({ message: err.message, success: false });
+            } else {
+              res.status(200).send({
+                message: "Data updated Successfully",
+                success: true,
+                data: result,
+              });
+            }
+          });
+        }
+      });
+    }
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+exports.deletecomment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      res.status(200).send({ message: "id is not specify", success: false });
+    } else {
+      Comment.findOne({ _id: id }, async (err, result) => {
+        if (result) {
+
+          Comment.deleteOne({ _id: id }, (err, val) => {
+            if (!val) {
+              res.status(200).send({ message: err.message, success: false });
+            } else {
+              product.updateOne(
+                { _id: result.product },
+                { $inc: { comments: -1, "metrics.orders": 1 } },
+                async (err, update) => {
+                  if (err) {
+                    res.status(200).json({
+                      success: false,
+                      message: err.message,
+                    });
+                  } else {
+                    res.status(200).send({
+                      message: "Data deleted Successfully",
+                      success: true,
+                    });
+                  }
+                }
+              );
+            }
+          });
+        } else {
+          res.status(200).send({ message: "Data Not exist", success: false });
         }
       });
     }

@@ -5,7 +5,12 @@ const order = mongoose.Schema(
     driver: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
     product: { type: mongoose.Schema.Types.ObjectId, ref: "product" },
     status: {type:String,enum:["pending","assigned","delivered","completed","rejected"] , default: "pending"},
-    reason : { type:String}
+    reason : { type:String},
+    quantity: { type: Number},
+    varient : {}
+
+
+
 },
   { timestamps: true }
 );

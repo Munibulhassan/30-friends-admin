@@ -3,11 +3,10 @@ const app = express();
 const bodyParser = require("body-parser");
 require("dotenv").config();
 app.use(bodyParser.json());
-const cors = require("cors");
 const mongoose = require("mongoose");
+
+//Datbase connection
 const MONGOurl = process.env.MONGOURL
-
-
 mongoose.connect(
   MONGOurl,
   {
@@ -23,10 +22,12 @@ mongoose.connect(
 );
 //routes
 const route = require("./routes/routes");
+//Routing
+app.use("/api", route);
 
-//sql connected
 
 app.use(function (req, res, next) {
+  
   // Website you wish to allow to connect
   res.setHeader("Access-Control-Allow-Origin", "*");
 
@@ -50,15 +51,20 @@ app.use(function (req, res, next) {
   next();
 });
 
+const cors = require("cors");
 const corsOptions = {
   origin: "*",
   credentials: true, //access-control-allow-credentials:true
   optionSuccessStatus: 200,
 };
+app.use(cors(corsOptions));
+
+
 ///login with google
+
 const session = require('express-session');
 const passport = require('passport');
-var userProfile;
+
 app.use(session({
   resave: false,
   saveUninitialized: true,
@@ -68,23 +74,17 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+
+
+
+
+
 app.set('view engine', 'ejs');
 
-app.get('/success', (req, res) => res.send(userProfile));
+app.get('/success', (req, res) => res.send("You are a valid user"));
 app.get('/error', (req, res) => res.send("error logging in"));
 
-///
-
-
-
-app.use(cors(corsOptions));
-//Routing
-app.use("/api", route);
-
-// app.use("/", (req, res, next) => {
-//   console.log(req.url);
-//   next();
-// });
+//server initialize
 const url = process.env.PORT && 5000;
 app.listen(url, () => {
   console.log("Server is Running on port " + url);

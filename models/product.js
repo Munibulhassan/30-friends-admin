@@ -36,13 +36,16 @@ const product = mongoose.Schema(
     height: { type: String },
     warranty: { type: String },
     varient: { type: {} },
+    
     image: {
       type: Array,
     },
     video: {
       type: Array,
     },
-    vendor:{ type: mongoose.Schema.Types.ObjectId, ref: "users" }
+    vendor:{ type: mongoose.Schema.Types.ObjectId, ref: "users"},
+    likes:{type:Number,default: 0},
+    comments:{type:Number,default: 0},
   },
   { timestamps: true }
 );

@@ -2,22 +2,46 @@ const fs = require("fs");
 const { promisify } = require("util");
 const unlinkAsync = promisify(fs.unlink);
 const order = require("../models/order");
+const Product = require("../models/product");
 
 exports.createorder = async (req, res) => {
   try {
-    const { customer, product } = req.body;
+    const { customer, product, quantity } = req.body;
     if (!(customer && product)) {
       res
         .status(200)
         .send({ message: "All input is required", success: false });
     } else {
-      const Order = new order(req.body);
-      Order.save().then((item) => {
-        res.status(200).send({
-          message: "Data save into Database",
-          data: item,
-          success: true,
-        });
+      Product.findOne({ _id: product }, (err, result) => {
+        if (result.stock < quantity) {
+          res.status(200).send({
+            message: "Cannot order more then stock",
+
+            success: false,
+          });
+        } else {
+          Product.updateOne(
+            { _id: product },
+            { $inc: { stock: -quantity ,"metrics.orders": 1 } },
+            (err, updated) => {
+              if (err) {
+                res.status(200).json({
+                  success: false,
+                  message: err.message,
+                });
+              } else {
+                const Order = new order(req.body);
+                Order.save().then((item) => {
+                  res.status(200).send({
+                    message: "Thank you for your order",
+                    data: item,
+                    success: true,
+                  });
+                });
+              }
+            }
+          );
+        }
       });
     }
   } catch (err) {
@@ -206,7 +230,6 @@ exports.deliveredorder = async (req, res) => {
     const { id } = req.params;
     order.findOne({ _id: id }, async (err, result) => {
       if (result) {
-        
         if (result.status != "assigned") {
           res.status(200).json({
             success: false,
@@ -221,8 +244,6 @@ exports.deliveredorder = async (req, res) => {
                 res.status(200).json({
                   success: true,
                   message: "Product is Successfully Delivered",
-
-
                 });
               } else {
                 res.status(200).json({

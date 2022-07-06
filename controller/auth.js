@@ -1,4 +1,4 @@
-const authentication = require("../models/auth");
+const authentication = require("../models/auth")
 const {
   loginSchema,
   registerSchema,
@@ -6,7 +6,7 @@ const {
 var bcrypt = require("bcryptjs");
 const { tokengenerate } = require("../middleware/auth");
 const nodemailer = require("nodemailer");
-const { Auth } = require("two-step-auth");
+// const { Auth } = require("two-step-auth");
 const twilio = require("twilio");
 const client = new twilio(process.env.accountSid, process.env.authToken);
 
@@ -413,25 +413,11 @@ exports.googlelogin = async (req, res) => {
   }
 };
 
-const passport = require("passport");
 
-
-const facebookStrategy = require("passport-facebook").Strategy;
 exports.facbooklogin = async (req, res) => {
   try {
-    passport.use(
-      new facebookStrategy(
-        {
-          // pull in our app id and secret from our auth.js file
-          clientID: "603496006962121",
-          clientSecret: "c63a6f6f8189ed75b5958b2c0c0e7341",
-          callbackURL: "http://localhost:5000/facebook/callback",
-        }, // facebook will send back the token and profile
-        function (token, refreshToken, profile, done) {
-          return done(null, profile);
-        }
-      )
-    );
+
+    
   } catch (err) {
     res.status(400).json({
       success: false,
@@ -449,3 +435,28 @@ exports.applelogin = async (req, res) => {
     });
   }
 };
+exports.getUsers  = async (req, res) => {
+  try{
+    const {page,limit}=req.query   
+    
+    const data =await authentication.find(req.query).limit(limit * 1)
+    .skip((page - 1) * limit)
+    .exec();
+    console.log(data)
+    if(data.length==0){
+      res.status(200).send({ message: "Users Not Exist", success: false });
+    }else{
+      res.status(200).send({
+        message: "Users get Successfully",
+        success: true,
+        data: data,
+      });
+    }
+
+  }catch(err){
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+}

@@ -23,6 +23,13 @@ const router = () => {
   Router.patch("/:id", upload.array("file"),  product.updateProduct);
   Router.delete("/:id", product.deleteProduct);
   Router.patch('/publish/:id', product.publishProduct)
+  Router.post('/comment',product.createcomment)
+  Router.get('/comment',product.getcomment)
+  Router.patch('/comment/:id',product.updatecomment)
+  Router.delete('/comment/:id',product.deletecomment)
+
+
+
 
   return Router;
 };
