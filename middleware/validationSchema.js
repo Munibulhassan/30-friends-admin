@@ -23,6 +23,7 @@ const registerSchema = joi.object({
   is_email_verify: joi.boolean(),
   is_phone_verify: joi.boolean(),
   referal_code: joi.string(),
+  referrer: joi.string().max(4),
   status:joi.boolean().default(false),
 
   create_at: joi.date().default(new Date().toLocaleString()),

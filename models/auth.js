@@ -13,12 +13,16 @@ const auth = mongoose.Schema(
     store_link: String,
     phone: {type:String,unique: true},
     password: String,
-    referal_code: String,
-    own_ref_code: String,
+    referal_code: String, ///own_ref_code
+    referrer: String, // sender
     state: String,
     city: String,
     e_otp: Number,
     p_otp: Number,
+    endsAt:{type:Date},
+    subscription:{type:mongoose.Schema.Types.ObjectId, ref: "subscription"},
+    interval:{type:String,enum:["monthly","annual"]},
+    ends_at:String,
     user_type: {
       type: String,
       enum: [

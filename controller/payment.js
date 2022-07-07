@@ -4,17 +4,18 @@ const Lazerpay = require("lazerpay-node-sdk");
 
 exports.lazerpaypayment = async (req, res) => {
   try {
+    const {name,email,amount} = req.body;
     ///initialize payment
 
     const payment_tx = async () => {
       try {
         const transaction_payload = {
-          reference: "YOUR_REFERENCE", // Replace with a reference you generated
-          customer_name: "Njoku Emmanuel",
-          customer_email: "kalunjoku123@gmail.com",
+          reference: '', // Replace with a reference you generated
+          customer_name: name,
+          customer_email: email,
           coin: "BUSD", // BUSD, DAI, USDC or USDT
           currency: "USD", // NGN, AED, GBP, EUR
-          amount: 100,
+          amount: amount,
           accept_partial_payment: true, // By default it's false
           metadata: {
             type: "Wallet fund",
@@ -25,9 +26,9 @@ exports.lazerpaypayment = async (req, res) => {
           transaction_payload
         );
 
-        console.log(response);
+        
       } catch (error) {
-        console.log(error);
+        
       }
     };
   } catch (err) {
@@ -61,9 +62,9 @@ exports.paystack = async (req, res) => {
           transaction_payload
         );
 
-        console.log(response);
+        
       } catch (error) {
-        console.log(error);
+        
       }
     };
   } catch (err) {

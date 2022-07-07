@@ -1,7 +1,8 @@
 const jwt = require("jsonwebtoken");
 
 
-const tokengenerate = ({ user }) => {
+const tokengenerate = (user ) => {
+  
   return (token = jwt.sign({ user }, process.env.SECRET, {
     expiresIn: "2h",
   }));
@@ -20,13 +21,13 @@ const verifytoken = (req, res, next) => {
   
     token = token.split(" ")[1];
     const decoded = jwt.verify(token, process.env.SECRET);
+    
 
-    req.user = decoded;
+    req.user = decoded.user;
   } catch (err) {
     return res.status(401).send("Invalid Token");
   }
-
-  return next();
+    return next();
 };
 const verifyadmintoken = (req, res, next) => {
   let token =

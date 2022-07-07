@@ -60,19 +60,110 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 
-///login with google
 
+///login with google
 const session = require('express-session');
 const passport = require('passport');
-
 app.use(session({
   resave: false,
   saveUninitialized: true,
   secret: 'SECRET' 
 }));
-
 app.use(passport.initialize());
 app.use(passport.session());
+///
+
+const user = require("./models/auth");
+const GoogleStrategy = require("passport-google-oauth2").Strategy;
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "http://localhost:5000/api/auth/google/callback",
+      passReqToCallback : true
+    },
+    function (request, accessToken, refreshToken, profile, done) {      
+      user.findOne({ googleId: profile?.id }).then((existingUser) => {
+        
+        if (existingUser) {
+          return done(null, existingUser);
+        } else {
+          var result = "";
+          var characters =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+          var charactersLength = characters.length;
+          for (var i = 0; i < 5; i++) {
+            result += characters.charAt(
+              Math.floor(Math.random() * charactersLength)
+            );
+          }
+          new user({
+            googleId: profile.id,
+            first_name: profile._json.given_name,
+            last_name: profile._json.family_name,
+            is_email_verify:true,
+            email: profile.emails[0].value,
+            provider: "google",
+            referal_code: result,
+          })
+            .save()
+            .then((user) => done(null, user));
+        }
+      });
+    }
+  )
+);
+///facebook
+const facebookStrategy = require("passport-facebook").Strategy;
+passport.use(
+  new facebookStrategy(
+    {
+      // pull in our app id and secret from our auth.js file
+      
+      clientID: process.env.FACEBOOK_CLIENTID ,
+      clientSecret: process.env.FACEBOOK_SECRET,
+      callbackURL: "http://localhost:5000/api/auth/facebook/callback",
+    }, // facebook will send back the token and profile
+    function (token, refreshToken, profile, done) {
+      if (profile.emails === undefined) {
+        done('email-required')
+        return;
+    }
+      
+
+
+      user.findOne({ facebookId: profile.id }).then((existingUser) => {
+        if (existingUser) {
+          return done(null, profile);
+        } else {
+          var result = "";
+          var characters =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+          var charactersLength = characters.length;
+          for (var i = 0; i < 5; i++) {
+            result += characters.charAt(
+              Math.floor(Math.random() * charactersLength)
+            );
+          }
+
+          new user({
+            facebookId: profile.id,
+            first_name: profile?.displayName?.split(" ")[0],
+            last_name: profile?.displayName?.split(" ")[1],
+            email: profile?.emails ? profile?.emails[0]?.value: "",
+            provider: "facebook",
+            own_ref_code: result,
+          })
+            .save()
+            .then((user) => done(null, user));
+        }
+      });
+    }
+  )
+);
+///
+
 
 
 

@@ -60,13 +60,16 @@ exports.getProduct = async (req, res) => {
     const data = await product
       .find(req.query)
       .populate({ path: "categories" })
+      .populate( {path:"vendor" ,select:['endsAt','interval','subscription']} )
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec();
 
+
     if (data.length == 0) {
       res.status(200).send({ message: "Data Not Exist", success: false });
     } else {
+
       res.status(200).send({
         message: "Data get Successfully",
         success: true,
@@ -231,11 +234,12 @@ exports.publishProduct = async (req, res) => {
 const Comment = require("../models/comment");
 const { log } = require("console");
 const { resourceLimits } = require("worker_threads");
+const like = require("../models/like");
 
 exports.createcomment = async (req, res) => {
   try {
     const { text, rate, user } = req.body;
-    const Product = req.body.product
+    const Product = req.body.product;
     if (!(text && rate && user && Product)) {
       res
         .status(200)
@@ -346,7 +350,6 @@ exports.deletecomment = async (req, res) => {
     } else {
       Comment.findOne({ _id: id }, async (err, result) => {
         if (result) {
-
           Comment.deleteOne({ _id: id }, (err, val) => {
             if (!val) {
               res.status(200).send({ message: err.message, success: false });
@@ -382,3 +385,167 @@ exports.deletecomment = async (req, res) => {
     });
   }
 };
+
+///likes
+exports.createlike = async (req, res) => {
+  try {
+    const { user } = req.body;
+    const Product = req.body.product;
+    if (!(user && Product)) {
+      res
+        .status(200)
+        .json({ message: "All input is required", success: false });
+    } else {
+      like.findOne({ user: user, product: Product }, async (err, result) => {
+        if (result) {
+          await like.deleteOne({ user: user, product: Product });
+          product.updateOne(
+            { _id: Product },
+            { $inc: { likes: -1, "metrics.orders": 1 } },
+            async (err, update) => {
+              if (err) {
+                res.status(200).json({
+                  success: false,
+                  message: err.message,
+                });
+              } else {
+                res.status(200).json({
+                  message: "product unlike successfully",
+                  success: true,
+                });
+              }
+            }
+          );
+        } else {
+          const Like = new like({
+            user: user,
+            product: Product,
+          });
+
+          product.updateOne(
+            { _id: Product },
+            { $inc: { likes: 1, "metrics.orders": 1 } },
+            async (err, update) => {
+              if (err) {
+                res.status(200).json({
+                  success: false,
+                  message: err.message,
+                });
+              } else {
+                await Like.save().then((data) => {
+                  res.status(200).json({
+                    success: true,
+                    message: "Product likes Successfully",
+                    data: data,
+                  });
+                });
+              }
+            }
+          );
+        }
+      });
+    }
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+exports.getlike = async (req, res) => {
+  try {
+    like.find(req.query, (err, result) => {
+      if (result.length < 0) {
+        res.status(200).send({ message: "Data Not Exist", success: false });
+      } else {
+        res.status(200).send({
+          message: "Data get Successfully",
+          success: true,
+          data: result,
+        });
+      }
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+// exports.updatelike = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     if (!id) {
+//       res.status(200).send({ message: "id is not specify", success: false });
+//     } else {
+//       Comment.findOne({ _id: id }, async (err, result) => {
+//         if (!result) {
+//           res.status(200).send({ message: "No Data Exist", success: false });
+//         } else {
+//           Comment.updateOne({ _id: id }, req.body, (err, result) => {
+//             if (err) {
+//               res.status(200).send({ message: err.message, success: false });
+//             } else {
+//               res.status(200).send({
+//                 message: "Data updated Successfully",
+//                 success: true,
+//                 data: result,
+//               });
+//             }
+//           });
+//         }
+//       });
+//     }
+//   } catch (err) {
+//     res.status(400).json({
+//       success: false,
+//       message: err.message,
+//     });
+//   }
+// };
+
+// exports.deletelike = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     if (!id) {
+//       res.status(200).send({ message: "id is not specify", success: false });
+//     } else {
+//       Comment.findOne({ _id: id }, async (err, result) => {
+//         if (result) {
+//           Comment.deleteOne({ _id: id }, (err, val) => {
+//             if (!val) {
+//               res.status(200).send({ message: err.message, success: false });
+//             } else {
+//               product.updateOne(
+//                 { _id: result.product },
+//                 { $inc: { comments: -1, "metrics.orders": 1 } },
+//                 async (err, update) => {
+//                   if (err) {
+//                     res.status(200).json({
+//                       success: false,
+//                       message: err.message,
+//                     });
+//                   } else {
+//                     res.status(200).send({
+//                       message: "Data deleted Successfully",
+//                       success: true,
+//                     });
+//                   }
+//                 }
+//               );
+//             }
+//           });
+//         } else {
+//           res.status(200).send({ message: "Data Not exist", success: false });
+//         }
+//       });
+//     }
+//   } catch (err) {
+//     res.status(400).json({
+//       success: false,
+//       message: err.message,
+//     });
+//   }
+// };

@@ -32,7 +32,7 @@ exports.register = async (req, res) => {
         result += characters.charAt(Math.floor(Math.random() * 
    charactersLength));
      }
-     req.body.own_ref_code = result
+     req.body.referal_code = result
       authentication.findOne({ email: email }, async (err, data) => {
         if (data) {
           req.body.email = email;
@@ -44,8 +44,7 @@ exports.register = async (req, res) => {
 
             res.status(200).json({
               message: "User Registered Successfully",
-              token: tokengenerate({ user: req.body}),
-
+              token: tokengenerate(item),
               success: true,
             });
           });
@@ -151,7 +150,7 @@ exports.updateProfile = async (req, res) => {
 exports.emailVerify = async (req, res) => {
   try {
     const { email, otp } = req.body;
-console.log(email)
+
     if (otp) {
       authentication.findOne(
         { email: email, e_otp: otp, is_email_verify: false },
@@ -442,7 +441,7 @@ exports.getUsers  = async (req, res) => {
     const data =await authentication.find(req.query).limit(limit * 1)
     .skip((page - 1) * limit)
     .exec();
-    console.log(data)
+    
     if(data.length==0){
       res.status(200).send({ message: "Users Not Exist", success: false });
     }else{
