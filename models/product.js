@@ -22,7 +22,7 @@ const product = mongoose.Schema(
     customization: { type: Boolean },
     status: {
       type: String,
-      default:"pending",
+      default: "pending",
       enum: ["draft", "pending", "published", "archived"],
     },
     is_approved: { type: Boolean, default: false },
@@ -36,16 +36,16 @@ const product = mongoose.Schema(
     height: { type: String },
     warranty: { type: String },
     varient: { type: {} },
-    
+
     image: {
       type: Array,
     },
     video: {
       type: Array,
     },
-    vendor:{ type: mongoose.Schema.Types.ObjectId, ref: "users"},
-    likes:{type:Number,default: 0},
-    comments:{type:Number,default: 0},
+    vendor: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
+    likes: { type: Number, default: 0 },
+    comments: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

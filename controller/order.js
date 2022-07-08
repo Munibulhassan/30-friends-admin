@@ -1,5 +1,6 @@
 const fs = require("fs");
 const { promisify } = require("util");
+const conversation = require("../models/conversation");
 const unlinkAsync = promisify(fs.unlink);
 const order = require("../models/order");
 const Product = require("../models/product");
@@ -22,7 +23,7 @@ exports.createorder = async (req, res) => {
         } else {
           Product.updateOne(
             { _id: product },
-            { $inc: { stock: -quantity ,"metrics.orders": 1 } },
+            { $inc: { stock: -quantity, "metrics.orders": 1 } },
             (err, updated) => {
               if (err) {
                 res.status(200).json({
@@ -58,6 +59,9 @@ exports.getorder = async (req, res) => {
 
     const data = await order
       .find(req.query)
+      .populate("product")
+      .populate("customer")
+      .populate("driver")
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec();
@@ -201,6 +205,11 @@ exports.assignorder = async (req, res) => {
             { driver: req.body._id || req.user._id, status: "assigned" },
             async (err, value) => {
               if (value) {
+                const Conversation = new conversation({
+                  members : [req.body._id || req.user._id , result.customer]
+                  
+                });
+                await Conversation.save();
                 res.status(200).json({
                   success: true,
                   message: "Product is Successfully assign for delivering",

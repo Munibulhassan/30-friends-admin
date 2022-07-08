@@ -2,6 +2,7 @@ const fs = require("fs");
 const { promisify } = require("util");
 const unlinkAsync = promisify(fs.unlink);
 const product = require("../models/product");
+const likes = require("../models/like");
 
 exports.createProduct = async (req, res) => {
   try {
@@ -60,20 +61,36 @@ exports.getProduct = async (req, res) => {
     const data = await product
       .find(req.query)
       .populate({ path: "categories" })
-      .populate( {path:"vendor" ,select:['endsAt','interval','subscription']} )
+      .populate({
+        path: "vendor",
+        select: ["endsAt", "interval", "subscription"],
+      })
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec();
 
-
     if (data.length == 0) {
       res.status(200).send({ message: "Data Not Exist", success: false });
     } else {
-
-      res.status(200).send({
-        message: "Data get Successfully",
-        success: true,
-        data: data,
+      const products = data;
+      data.map((item, index) => {
+        likes.findOne(
+          { product: item._id, user: req.user._id },
+          (err, result) => {
+            if (result != null) {
+              products[index].like = true;
+            } else {
+              products[index].like = false;
+            }
+            if (index == data.length - 1) {
+              res.status(200).send({
+                message: "Data get Successfully",
+                success: true,
+                data: products,
+              });
+            }
+          }
+        );
       });
     }
   } catch (err) {
@@ -232,7 +249,7 @@ exports.publishProduct = async (req, res) => {
   }
 };
 const Comment = require("../models/comment");
-const { log } = require("console");
+
 const { resourceLimits } = require("worker_threads");
 const like = require("../models/like");
 

@@ -164,7 +164,7 @@ passport.use(
 );
 ///
 
-
+require('./index')
 
 
 

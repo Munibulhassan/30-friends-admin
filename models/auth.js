@@ -23,6 +23,7 @@ const auth = mongoose.Schema(
     subscription:{type:mongoose.Schema.Types.ObjectId, ref: "subscription"},
     interval:{type:String,enum:["monthly","annual"]},
     ends_at:String,
+    response_rate:{type:Number},
     user_type: {
       type: String,
       enum: [

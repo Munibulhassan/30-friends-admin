@@ -3,7 +3,7 @@ const Router = express.Router();
 const product = require("../controller/product");
 const multer = require("multer");
 const path = require("path");
-const { verifyadmintoken } = require("../middleware/auth");
+const { verifyadmintoken, verifytoken } = require("../middleware/auth");
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/product/");
@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
 var upload = multer({ storage: storage });
 const router = () => {
   Router.post("/", upload.array("file"), product.createProduct);
-  Router.get("/", product.getProduct);
+  Router.get("/",verifytoken, product.getProduct);
   Router.patch("/:id", upload.array("file"),  product.updateProduct);
   Router.delete("/:id", product.deleteProduct);
   Router.patch('/publish/:id', product.publishProduct)
