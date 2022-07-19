@@ -1,4 +1,4 @@
-const authentication = require("../models/auth")
+const authentication = require("../models/auth");
 const {
   loginSchema,
   registerSchema,
@@ -25,28 +25,23 @@ exports.register = async (req, res) => {
       res.status(422).send({ message: "invlaid Email", success: false });
     } else {
       await registerSchema.validateAsync(req.body);
-      var result           = '';
-      var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      var result = "";
+      var characters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
       var charactersLength = characters.length;
-      for ( var i = 0; i < 5; i++ ) {
-        result += characters.charAt(Math.floor(Math.random() * 
-   charactersLength));
-     }
-     req.body.referal_code = result
-      authentication.findOne({ email: email }, async (err, data) => {
-        if (data) {
-          req.body.email = email;
-          req.body.phone = data.phone;
-          var salt = bcrypt.genSaltSync(10);
-          req.body.password = bcrypt.hashSync(req.body.password, salt);
-          authentication.updateOne({ email }, req.body, (err, result) => {
-            req.body.password = ""
-
-            res.status(200).json({
-              message: "User Registered Successfully",
-              token: tokengenerate(item),
-              success: true,
-            });
+      for (var i = 0; i < 5; i++) {
+        result += characters.charAt(
+          Math.floor(Math.random() * charactersLength)
+        );
+      }
+      req.body.referal_code = result;
+      authentication.findOne({ email: email}, async (err, data) => {
+        const value = await authentication.findOne({phone:phone})
+        if (data || value) {
+          res.status(200).json({
+            message: "User already exist with same email address",
+            
+            success: false,
           });
         } else {
           var salt = bcrypt.genSaltSync(10);
@@ -57,7 +52,7 @@ exports.register = async (req, res) => {
             res.status(200).send({
               message: "Data save into Database",
               data: item,
-              token: tokengenerate({ user: item }),
+              token: tokengenerate( item ),
               success: true,
             });
           });
@@ -112,7 +107,8 @@ exports.login = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    const { id } = req.params;
+    const  id  = req.user._id;
+    console.log(id)
 
     if (!id) {
       res.status(200).send({ message: "id is not specify", success: false });
@@ -126,17 +122,23 @@ exports.updateProfile = async (req, res) => {
 
           //   req.body.image = req.file.filename;
           // }
-          authentication.updateOne({ _id: id }, req.body, (err, result) => {
-            if (err) {
-              res.status(200).send({ message: err.message, success: false });
-            } else {
-              res.status(200).send({
-                message: "User updated Successfully",
-                success: true,
-                data: result,
-              });
-            }
-          });
+          if (req.body.password || req.body.email) {
+            res
+              .status(200)
+              .send({ message: "Credentials cannot updated", success: false });
+          } else {
+            authentication.updateOne({ _id: id }, req.body, (err, result) => {
+              if (err) {
+                res.status(200).send({ message: err.message, success: false });
+              } else {
+                res.status(200).send({
+                  message: "User updated Successfully",
+                  success: true,
+                  data: result,
+                });
+              }
+            });
+          }
         }
       });
     }
@@ -182,7 +184,6 @@ exports.emailVerify = async (req, res) => {
         }
       );
     } else {
-
       let OTP = Math.floor(1000 + Math.random() * 9000);
       let transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
@@ -199,9 +200,9 @@ exports.emailVerify = async (req, res) => {
         from: process.env.email,
         to: email, // sender address
         subject: "Invoice for your order", // Subject line
-        html: `<p> Your Vrificaton  code is  <b> ${OTP}</b></p>`
+        html: `<p> Your Vrificaton  code is  <b> ${OTP}</b></p>`,
       };
-      
+
       authentication.findOne({ email: email }, async (err, result) => {
         if (result?.is_email_verify) {
           res.status(200).send({
@@ -217,12 +218,10 @@ exports.emailVerify = async (req, res) => {
                 message: "OTP send to your email address",
                 success: true,
               });
-            }})    
+            }
+          });
         }
-      })
-      
-
-     
+      });
     }
   } catch (err) {
     res.status(400).json({
@@ -264,8 +263,12 @@ exports.phoneVerify = async (req, res) => {
         }
       });
     } else {
-      authentication.findOne({ email }, (err, result) => {
-        if (!result) {
+      authentication.findOne({ email , phone }, async(err, result) => {
+        
+        console.log(result)
+        if (!result ) {
+        console.log(result)
+
           const Authentication = new authentication({
             email: email,
             phone: phone,
@@ -287,32 +290,36 @@ exports.phoneVerify = async (req, res) => {
               );
           });
         } else {
-          if (result.is_phone_verify == true && result.phone == phone) {
+
+          if (result?.is_phone_verify == true && result?.phone == phone ) {
             res.status(200).send({
               message: "Phone is already verify",
               success: false,
             });
-          } else if (result.phone != phone) {
+          } else if (result?.phone != phone) {
             res.status(200).send({
               message: "You are trying with another phone no",
               success: false,
             });
           } else {
-            authentication.updateOne({ email }, { p_otp: OTP }, (err, val) => {
-              client.messages
-                .create({
-                  body: `Your Verification OTP is ${OTP}`,
-                  to: req.body.phone, // Text this number
-                  from: process.env.phone, // From a valid Twilio number
-                })
-                .then((message) =>
-                  res.status(200).send({
-                    message: "OTP send to " + phone,
-                    success: true,
+            
+              authentication.updateOne({ email:email }, { p_otp: OTP }, (err, val) => {
+                client.messages
+                  .create({
+                    body: `Your Verification OTP is ${OTP}`,
+                    to: req.body.phone, // Text this number
+                    from: process.env.phone, // From a valid Twilio number
                   })
-                )
-                .done();
-            });
+                  .then((message) =>
+                    res.status(200).send({
+                      message: "OTP send to " + phone,
+                      success: true,
+                    })
+                  )
+                  .done();
+              });
+           
+            
           }
         }
       });
@@ -366,7 +373,8 @@ exports.resetPassword = async (req, res) => {
     const { email, oldpassword, password, confirmpassword } = req.body;
     if (password == confirmpassword) {
       authentication.findOne({ email }, (err, result) => {
-        if (!bcrypt.compareSync(oldpassword, result.password)) {
+        
+        if (result.password==undefined || !bcrypt.compareSync(oldpassword, result.password)) {
           res.send({
             message: "Invlid oldpassowrd",
             success: false,
@@ -402,8 +410,58 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-exports.googlelogin = async (req, res) => {
+exports.adduser = async (req, res) => {
   try {
+    const { first_name, last_name, email, phone, city, state, password } =
+      req.body;
+    var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    if (
+      !(first_name && last_name && email && phone && city && state && password)
+    ) {
+      res
+        .status(200)
+        .send({ message: "All input is required", success: false });
+    } else if (!re.test(email)) {
+      res.status(422).send({ message: "invlaid Email", success: false });
+    } else {
+      await registerSchema.validateAsync(req.body);      
+      authentication.findOne({ email: email }, async (err, data) => {
+        if (data || await authentication.findOne({phone:req.body.phone})) {        
+            res.status(200).json({
+              message: "User already exist with same email address or phone",              
+              success: false,
+            });          
+        } else {
+          var result = "";
+      var characters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+      var charactersLength = characters.length;
+      for (var i = 0; i < 5; i++) {
+        result += characters.charAt(
+          Math.floor(Math.random() * charactersLength)
+        );
+      }
+      req.body.referal_code = result;
+      req.body.referrer = req.user.user.referal_code;
+
+          req.body.is_phone_verify = true
+          req.body.is_email_verify = true
+
+          var salt = bcrypt.genSaltSync(10);
+          req.body.password = bcrypt.hashSync(req.body.password, salt);
+          const Authentication = new authentication(req.body);
+          Authentication.save().then((item) => {
+            item.password = "";
+            res.status(200).send({
+              message: "Data save into Database",
+              data: item,
+              token: tokengenerate(item),
+              success: true,
+            });
+          });
+        }
+      });
+    }
   } catch (err) {
     res.status(400).json({
       success: false,
@@ -412,11 +470,43 @@ exports.googlelogin = async (req, res) => {
   }
 };
 
-
-exports.facbooklogin = async (req, res) => {
+exports.edituser = async (req, res) => {
   try {
-
+    const  {id } = req.query;
     
+
+    if (!id) {
+      res.status(200).send({ message: "id is not specify", success: false });
+    } else {
+      authentication.findOne({ _id: id }, async (err, result) => {
+        if (!result) {
+          res.status(200).send({ message: "No USer Exist", success: false });
+        } else {
+          // if (req.file) {
+          //   await unlinkAsync(`uploads/category/` + result.image);
+
+          //   req.body.image = req.file.filename;
+          // }
+          if (req.body.password || req.body.email) {
+            res
+              .status(200)
+              .send({ message: "Credentials cannot updated", success: false });
+          } else {
+            authentication.updateOne({ _id: id }, req.body, (err, result) => {
+              if (err) {
+                res.status(200).send({ message: err.message, success: false });
+              } else {
+                res.status(200).send({
+                  message: "User updated Successfully",
+                  success: true,
+                  data: result,
+                });
+              }
+            });
+          }
+        }
+      });
+    }
   } catch (err) {
     res.status(400).json({
       success: false,
@@ -425,6 +515,42 @@ exports.facbooklogin = async (req, res) => {
   }
 };
 
+exports.userStatusUpdated = async (req, res) => {
+  try {
+    const  {id } = req.query;
+    
+
+    if (!id) {
+      res.status(200).send({ message: "id is not specify", success: false });
+    } else {
+      authentication.findOne({ _id: id }, async (err, result) => {
+        if (!result) {
+          res.status(200).send({ message: "No USer Exist", success: false });
+        } else {
+        
+          
+            authentication.updateOne({ _id: id }, {status:!result.status}, (err, result) => {
+              if (err) {
+                res.status(200).send({ message: err.message, success: false });
+              } else {
+                res.status(200).send({
+                  message: "User Status updated",
+                  success: true,
+                  data: result,
+                });
+              }
+            });
+         
+        }
+      });
+    }
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
 exports.applelogin = async (req, res) => {
   try {
   } catch (err) {
@@ -434,28 +560,29 @@ exports.applelogin = async (req, res) => {
     });
   }
 };
-exports.getUsers  = async (req, res) => {
-  try{
-    const {page,limit}=req.query   
-    
-    const data =await authentication.find(req.query).limit(limit * 1)
-    .skip((page - 1) * limit)
-    .exec();
-    
-    if(data.length==0){
+exports.getUsers = async (req, res) => {
+  try {
+    const { page, limit } = req.query;
+
+    const data = await authentication
+      .find(req.query)
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+
+    if (data.length == 0) {
       res.status(200).send({ message: "Users Not Exist", success: false });
-    }else{
+    } else {
       res.status(200).send({
         message: "Users get Successfully",
         success: true,
         data: data,
       });
     }
-
-  }catch(err){
+  } catch (err) {
     res.status(400).json({
       success: false,
       message: err.message,
     });
   }
-}
+};

@@ -2,6 +2,7 @@ const express = require("express");
 const Router = express.Router();
 const auth = require("../controller/auth");
 const passport = require("passport");
+const { verifytoken, verifyadmintoken } = require("../middleware/auth");
 
 const router = () => {
   passport.serializeUser(function (user, done) {
@@ -23,7 +24,7 @@ const router = () => {
 
   Router.post("/forgotPassword", auth.forgotPassword);
   Router.post("/resetPassword", auth.resetPassword);
-  Router.post("/updateProfile", auth.updateProfile);
+  Router.post("/updateProfile", verifytoken,auth.updateProfile);
 
   // Router.post("/signinwithgoogle", auth.googlelogin);
   //social login
@@ -63,14 +64,14 @@ const router = () => {
 
   ///
 
-  Router.post("/signinwithfacebook", auth.applelogin);
+  Router.post("/signinwithapple", auth.applelogin);
   Router.get("/users", auth.getUsers);
 
   ///Admin Routes
-  Router.post("/adduser");
-  Router.patch("/edituser");
-  Router.post("/approveuser");
-  Router.delete("/deleteuser");
+  Router.post("/adduser",verifyadmintoken,auth.adduser);
+  Router.patch("/edituser",verifyadmintoken,auth.edituser);
+  Router.patch("/status",verifyadmintoken,auth.userStatusUpdated);
+  
 
   return Router;
 };

@@ -66,12 +66,10 @@ exports.cancelsubscription = async (req, res) => {
       //   { subscription: undefined, interval:undefined }
       // );
 
-      res
-        .status(200)
-        .send({
-          message: "Subscription Plan is cancelled successfully",
-          success: false,
-        });
+      res.status(200).send({
+        message: "Subscription Plan is cancelled successfully",
+        success: false,
+      });
     } else {
       res.status(200).send({
         message: "You have no subscribed any subscription",

@@ -17,7 +17,9 @@ const product = mongoose.Schema(
     subcategories: { type: mongoose.Schema.Types.ObjectId, ref: "subcategory" },
     categories: { type: mongoose.Schema.Types.ObjectId, ref: "category" },
     brands: { type: mongoose.Schema.Types.ObjectId, ref: "brand" },
-    store: { type: String },
+    store: { type: mongoose.Schema.Types.ObjectId, ref: "store" },
+    collection_name: { type: mongoose.Schema.Types.ObjectId, ref:  "collection" },
+
 
     customization: { type: Boolean },
     status: {

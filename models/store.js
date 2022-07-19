@@ -11,7 +11,8 @@ const store = mongoose.Schema({
     government_file_type:{
         type: String,
         enum: ["national_id", "international_pasword", "voters_card","driving_license"]
-      }
+      },
+      user:{ type: mongoose.Schema.Types.ObjectId, ref: "users"},
 
 
 },
