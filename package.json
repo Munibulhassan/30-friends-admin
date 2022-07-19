@@ -9,6 +9,10 @@
   },
   "author": "",
   "license": "ISC",
+  "keywords": [
+    "example",
+    "heroku"
+  ],
   "dependencies": {
     "aws-sdk": "^2.1152.0",
     "bcryptjs": "^2.4.3",
