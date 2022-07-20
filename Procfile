@@ -1,1 +1,1 @@
-npm run dev
+web:node app.js
