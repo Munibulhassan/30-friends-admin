@@ -207,6 +207,7 @@ exports.publishProduct = async (req, res) => {
       res.status(200).send({ message: "id is not specify", success: false });
     } else {
       product.findOne({ _id: id }, async (err, result) => {
+        console.log(req?.user?._id , result?.vendor)
         if (req?.user?._id != result?.vendor) {
           res.status(200).send({
             message: "Only Vendor of this product can update product details",
