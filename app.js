@@ -176,7 +176,7 @@ app.get('/success', (req, res) => res.send("You are a valid user"));
 app.get('/error', (req, res) => res.send("error logging in"));
 
 //server initialize
-const url = process.env.PORT && 5000;
+const url = process.env.PORT || 5000;
 app.listen(url, () => {
   console.log("Server is Running on port " + url);
 });
