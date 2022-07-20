@@ -19,8 +19,6 @@ const product = mongoose.Schema(
     brands: { type: mongoose.Schema.Types.ObjectId, ref: "brand" },
     store: { type: mongoose.Schema.Types.ObjectId, ref: "store" },
     collection_name: { type: mongoose.Schema.Types.ObjectId, ref:  "collection" },
-
-
     customization: { type: Boolean },
     status: {
       type: String,
@@ -30,7 +28,6 @@ const product = mongoose.Schema(
     is_approved: { type: Boolean, default: false },
     regular_price: { type: Number },
     discounted_price: { type: Number },
-
     stock: { type: Number },
     weight: { type: String },
     length: { type: String },

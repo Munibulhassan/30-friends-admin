@@ -10,6 +10,7 @@ const order = require("./order");
 const subscription = require("./subscription");
 const conversation = require("./conversation");
 const message = require("./message");
+const compaign = require("./compaign");
 app.get('/call', (req, res)=>{
     res.render('../view/call.ejs')
 })
@@ -22,6 +23,8 @@ app.use("/order", order)
 app.use("/subscription",subscription)
 app.use("/conversation",conversation)
 app.use("/message",message)
+app.use("/compaign",compaign)
+
 
 
 
