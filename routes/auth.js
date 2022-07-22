@@ -25,6 +25,8 @@ const router = () => {
   Router.post("/forgotPassword", auth.forgotPassword);
   Router.post("/resetPassword", auth.resetPassword);
   Router.post("/updateProfile", verifytoken,auth.updateProfile);
+  Router.get("/driverprofile",verifytoken, auth.getdriver)
+
 
   // Router.post("/signinwithgoogle", auth.googlelogin);
   //social login

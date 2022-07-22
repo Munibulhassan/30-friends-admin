@@ -1,9 +1,11 @@
 const fs = require("fs");
 const { promisify } = require("util");
 const conversation = require("../models/conversation");
-const unlinkAsync = promisify(fs.unlink);
+
 const order = require("../models/order");
+
 const Product = require("../models/product");
+var crypto = require("crypto");
 
 exports.createorder = async (req, res) => {
   try {
@@ -14,7 +16,7 @@ exports.createorder = async (req, res) => {
         .send({ message: "All input is required", success: false });
     } else {
       Product.findOne({ _id: product }, (err, result) => {
-        if (result.stock < quantity) {
+        if (result?.stock < quantity) {
           res.status(200).send({
             message: "Cannot order more then stock",
 
@@ -31,8 +33,11 @@ exports.createorder = async (req, res) => {
                   message: err.message,
                 });
               } else {
+                req.body.orderid = "ORD"+crypto.randomBytes(4).toString('hex');;
                 const Order = new order(req.body);
-                Order.save().then((item) => {
+                Order.save().then(async (item) => {
+                  
+                  
                   res.status(200).send({
                     message: "Thank you for your order",
                     data: item,
@@ -85,7 +90,6 @@ exports.getorder = async (req, res) => {
 exports.updateorder = async (req, res) => {
   try {
     const { id } = req.params;
-
     if (!id) {
       res.status(200).send({ message: "id is not specify", success: false });
     } else {
@@ -93,17 +97,50 @@ exports.updateorder = async (req, res) => {
         if (!result) {
           res.status(200).send({ message: "No Data Exist", success: false });
         } else {
-          order.updateOne({ _id: id }, req.body, (err, result) => {
-            if (err) {
-              res.status(200).send({ message: err.message, success: false });
+          if (req.body.quantity) {
+            const product = await Product.findOne({ _id: result.product });
+            
+            if (product.stock + result.quantity > req.body.quantity) {
+              product.stock =
+                product.stock + result.quantity - req.body.quantity;
+              const updateproduct = await Product.updateOne(
+                { _id: result.product },
+                { stock: product.stock }
+              );
+              order.updateOne({ _id: id }, req.body, (err, result) => {
+                if (err) {
+                  res
+                    .status(200)
+                    .send({ message: err.message, success: false });
+                } else {
+                  res.status(200).send({
+                    message: "Data updated Successfully",
+                    success: true,
+                    data: result,
+                  });
+                }
+              });
             } else {
               res.status(200).send({
-                message: "Data updated Successfully",
-                success: true,
-                data: result,
+                message: "required quantity is exceed the stock of product",
+                success: false,
               });
             }
-          });
+          }else{
+            order.updateOne({ _id: id }, req.body, (err, result) => {
+              if (err) {
+                res
+                  .status(200)
+                  .send({ message: err.message, success: false });
+              } else {
+                res.status(200).send({
+                  message: "Data updated Successfully",
+                  success: true,
+                  data: result,
+                });
+              }
+            });
+          }
         }
       });
     }
@@ -122,6 +159,12 @@ exports.deleteorder = async (req, res) => {
     } else {
       order.findOne({ _id: id }, async (err, result) => {
         if (result) {
+          if (result.status != "pending") {
+            res.status(200).json({
+              message: "Order cannot be cancelled",
+              success: false,
+            });
+          } else {
           order.deleteOne({ _id: id }, (err, val) => {
             if (!val) {
               res.status(200).send({ message: err.message, success: false });
@@ -131,7 +174,7 @@ exports.deleteorder = async (req, res) => {
                 success: true,
               });
             }
-          });
+          })}
         } else {
           res.status(200).send({ message: "Order Not exist", success: false });
         }
@@ -191,7 +234,7 @@ exports.rejectorder = async (req, res) => {
 
 exports.assignorder = async (req, res) => {
   try {
-    const { id } = req.query;
+    const { id } = req.params;
     order.findOne({ _id: id }, async (err, result) => {
       if (result) {
         if (result.status != "pending") {
@@ -202,17 +245,18 @@ exports.assignorder = async (req, res) => {
         } else {
           order.updateOne(
             { _id: id },
-            { driver: req.body._id || req.user._id, status: "assigned" },
+            { driver: req.body._id || req.user._id, status: "assigned" ,
+            pickuptime:new Date()
+          },
             async (err, value) => {
               if (value) {
                 const Conversation = new conversation({
-                  members : [req.body._id || req.user._id , result.customer]
-                  
+                  members: [req.body._id || req.user._id, result.customer],
                 });
                 await Conversation.save();
                 res.status(200).json({
                   success: true,
-                  message: "Product is Successfully assign for delivering",
+                  message: "Order is Successfully assign for delivering",
                 });
               } else {
                 res.status(200).json({
@@ -247,7 +291,7 @@ exports.deliveredorder = async (req, res) => {
         } else {
           order.updateOne(
             { _id: id },
-            { status: "delivered" },
+            { status: "delivered" ,dropofftime:new Date()},
             async (err, value) => {
               if (value) {
                 res.status(200).json({
@@ -287,12 +331,53 @@ exports.completedorder = async (req, res) => {
         } else {
           order.updateOne(
             { _id: id },
-            { status: "completed" },
+            { status: "completed",distance:req.body.distance },
             async (err, value) => {
               if (value) {
                 res.status(200).json({
                   success: true,
                   message: "Delivering process is Successfully completed",
+                });
+              } else {
+                res.status(200).json({
+                  success: false,
+                  message: err.message,
+                });
+              }
+            }
+          );
+        }
+      } else {
+        res.status(200).end({ message: "order Not exist", success: false });
+      }
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+exports.driverreview = async (req, res) => {
+  try {
+    const { id } = req.params;
+    order.findOne({ _id: id }, async (err, result) => {
+      if (result) {
+        if (result.status != "completed") {
+          res.status(200).json({
+            success: false,
+            message: "You cannot rate driver before Complition of order",
+          });
+        } else {
+          order.updateOne(
+            { _id: id },
+            { star: req.body.star },
+            async (err, value) => {
+              if (value) {
+                res.status(200).json({
+                  success: true,
+                  message: "Thank you for your Reviews ",
                 });
               } else {
                 res.status(200).json({

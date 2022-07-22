@@ -20,8 +20,12 @@ exports.createcompaign = async (req, res) => {
         } else {
           req.body.user = req.user._id;
           req.body.image = req.file.filename;
+
+          req.body.from = new Date(JSON.stringify(req.body.from));
+          req.body.to = new Date(JSON.stringify(req.body.to));
+
           const Compaign = new compaign(req.body);
-          Compaign.asve().then((item) => {
+          Compaign.save().then((item) => {
             res.status(200).send({
               message: "Data save into Database",
               data: item,
@@ -38,54 +42,77 @@ exports.createcompaign = async (req, res) => {
     });
   }
 };
-exports.updatecompaign = async (req,res)=>{
-    try{
-        const {id} = req.params
-        compaign.findOne({_id:id},async (err, result)=>{
-            if(!result)
-            {
-                res.status(200).json({
-                    success: false,
-                    message: "No Compaign Exit",
-                  });        
-            }else{
-                compaign.updateOne({_id:id},req.body,(err, value)=>{
-                    if(value){
-                        res.status(200).json({
-                            success: true,
-                            message: "Products successfully added",
-                          });
-                    }
-                })
-            }
-        })
-    }catch (err) {
-        res.status(400).json({
+exports.updatecompaign = async (req, res) => {
+  try {
+    const { id } = req.params;
+    compaign.findOne({ _id: id }, async (err, result) => {
+      if (!result) {
+        res.status(200).json({
           success: false,
-          message: err.message,
+          message: "No Compaign Exit",
+        });
+      } else {
+        if (req.file) {
+          await unlinkAsync(`uploads/compaign/` + result.image);
+          req.body.image = req.file.filename;
+        }
+        compaign.updateOne({ _id: id }, req.body, (err, value) => {
+          if (value) {
+            if(req.body.products){
+              res.status(200).json({
+                success: true,
+                message: "Products successfully added",
+              });
+            }else if(req.body.participants){
+
+              res.status(200).json({
+                success: true,
+                message: "Participants successfully added",
+              });
+            }
+          }
         });
       }
-}
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
 exports.getcompaign = async (req, res) => {
   try {
-    const { page, limit } = req.query;
-
     const data = await compaign
       .find(req.query)
-      .populate("product")
-      .populate("customer")
-      .populate("driver")
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
+      .populate("products")
+      .populate("participants")
       .exec();
 
     if (data.length == 0) {
       res.status(200).send({ message: "Data Not Exist", success: false });
     } else {
-      res.status(200).send({
-        message: "Data get Successfully",
-        success: true,
-        data: data,
+      const today = new Date();
+      data.map(async (item, index) => {
+        const date = new Date(item.from);
+        if (
+          date.getFullYear() < today.getFullYear() ||
+          date.getMonth() < today.getMonth() ||
+          date.getDate() < today.getDate()
+        ) {
+          await compaign.updateOne({ _id: item._id }, { status: "closed" });
+        }
+        if (index == data.length-1) {
+          res.status(200).send({
+            message: "Data get Successfully",
+            success: true,
+            data: await compaign
+              .find(req.query)
+              .populate("products")
+              .populate("participants")
+              .exec(),
+          });
+        }
       });
     }
   } catch (err) {

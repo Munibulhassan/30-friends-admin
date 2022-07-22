@@ -17,28 +17,28 @@ const getuser = (userId) => {
     return users.find(user => user.userId == userId)
 }
 io.on("connection", (socket) => {
-    console.log("Socket is running");
+    
     socket.on("addUser", userId => {
         addUser(userId, socket.id)
         io.emit("getusers", users)
 
     })
     socket.on("sendMessage", ({ senderId, recieverId, text }) => {
-        console.log(senderId, recieverId, text);
+        
         const user = getuser(recieverId)
-        console.log(user);
+        
         io.to(user?.socketId).emit("getMessage", {
             senderId, text
         })
     })
     socket.on("disconnect", () => {
-        console.log("user disconnected");
+        
         removeUser(socket.id)
         io.emit("getusers", users)
     })
 })
 
 server.listen(4000 , ()=>{
-    console.log("Socket is running on port 4000");
+    
 }
 );

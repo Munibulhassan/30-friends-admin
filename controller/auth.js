@@ -35,12 +35,12 @@ exports.register = async (req, res) => {
         );
       }
       req.body.referal_code = result;
-      authentication.findOne({ email: email}, async (err, data) => {
-        const value = await authentication.findOne({phone:phone})
+      authentication.findOne({ email: email }, async (err, data) => {
+        const value = await authentication.findOne({ phone: phone });
         if (data || value) {
           res.status(200).json({
             message: "User already exist with same email address",
-            
+
             success: false,
           });
         } else {
@@ -52,7 +52,7 @@ exports.register = async (req, res) => {
             res.status(200).send({
               message: "Data save into Database",
               data: item,
-              token: tokengenerate( item ),
+              token: tokengenerate(item),
               success: true,
             });
           });
@@ -107,8 +107,8 @@ exports.login = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    const  id  = req.user._id;
-    console.log(id)
+    const id = req.user._id;
+    
 
     if (!id) {
       res.status(200).send({ message: "id is not specify", success: false });
@@ -263,11 +263,10 @@ exports.phoneVerify = async (req, res) => {
         }
       });
     } else {
-      authentication.findOne({ email , phone }, async(err, result) => {
+      authentication.findOne({ email, phone }, async (err, result) => {
         
-        console.log(result)
-        if (!result ) {
-        console.log(result)
+        if (!result) {
+          
 
           const Authentication = new authentication({
             email: email,
@@ -290,8 +289,7 @@ exports.phoneVerify = async (req, res) => {
               );
           });
         } else {
-
-          if (result?.is_phone_verify == true && result?.phone == phone ) {
+          if (result?.is_phone_verify == true && result?.phone == phone) {
             res.status(200).send({
               message: "Phone is already verify",
               success: false,
@@ -302,8 +300,10 @@ exports.phoneVerify = async (req, res) => {
               success: false,
             });
           } else {
-            
-              authentication.updateOne({ email:email }, { p_otp: OTP }, (err, val) => {
+            authentication.updateOne(
+              { email: email },
+              { p_otp: OTP },
+              (err, val) => {
                 client.messages
                   .create({
                     body: `Your Verification OTP is ${OTP}`,
@@ -317,9 +317,8 @@ exports.phoneVerify = async (req, res) => {
                     })
                   )
                   .done();
-              });
-           
-            
+              }
+            );
           }
         }
       });
@@ -373,8 +372,10 @@ exports.resetPassword = async (req, res) => {
     const { email, oldpassword, password, confirmpassword } = req.body;
     if (password == confirmpassword) {
       authentication.findOne({ email }, (err, result) => {
-        
-        if (result.password==undefined || !bcrypt.compareSync(oldpassword, result.password)) {
+        if (
+          result.password == undefined ||
+          !bcrypt.compareSync(oldpassword, result.password)
+        ) {
           res.send({
             message: "Invlid oldpassowrd",
             success: false,
@@ -424,28 +425,28 @@ exports.adduser = async (req, res) => {
     } else if (!re.test(email)) {
       res.status(422).send({ message: "invlaid Email", success: false });
     } else {
-      await registerSchema.validateAsync(req.body);      
+      await registerSchema.validateAsync(req.body);
       authentication.findOne({ email: email }, async (err, data) => {
-        if (data || await authentication.findOne({phone:req.body.phone})) {        
-            res.status(200).json({
-              message: "User already exist with same email address or phone",              
-              success: false,
-            });          
+        if (data || (await authentication.findOne({ phone: req.body.phone }))) {
+          res.status(200).json({
+            message: "User already exist with same email address or phone",
+            success: false,
+          });
         } else {
           var result = "";
-      var characters =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-      var charactersLength = characters.length;
-      for (var i = 0; i < 5; i++) {
-        result += characters.charAt(
-          Math.floor(Math.random() * charactersLength)
-        );
-      }
-      req.body.referal_code = result;
-      req.body.referrer = req.user.user.referal_code;
+          var characters =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+          var charactersLength = characters.length;
+          for (var i = 0; i < 5; i++) {
+            result += characters.charAt(
+              Math.floor(Math.random() * charactersLength)
+            );
+          }
+          req.body.referal_code = result;
+          req.body.referrer = req.user.user.referal_code;
 
-          req.body.is_phone_verify = true
-          req.body.is_email_verify = true
+          req.body.is_phone_verify = true;
+          req.body.is_email_verify = true;
 
           var salt = bcrypt.genSaltSync(10);
           req.body.password = bcrypt.hashSync(req.body.password, salt);
@@ -472,8 +473,7 @@ exports.adduser = async (req, res) => {
 
 exports.edituser = async (req, res) => {
   try {
-    const  {id } = req.query;
-    
+    const { id } = req.query;
 
     if (!id) {
       res.status(200).send({ message: "id is not specify", success: false });
@@ -517,8 +517,7 @@ exports.edituser = async (req, res) => {
 
 exports.userStatusUpdated = async (req, res) => {
   try {
-    const  {id } = req.query;
-    
+    const { id } = req.query;
 
     if (!id) {
       res.status(200).send({ message: "id is not specify", success: false });
@@ -527,9 +526,10 @@ exports.userStatusUpdated = async (req, res) => {
         if (!result) {
           res.status(200).send({ message: "No USer Exist", success: false });
         } else {
-        
-          
-            authentication.updateOne({ _id: id }, {status:!result.status}, (err, result) => {
+          authentication.updateOne(
+            { _id: id },
+            { status: !result.status },
+            (err, result) => {
               if (err) {
                 res.status(200).send({ message: err.message, success: false });
               } else {
@@ -539,8 +539,8 @@ exports.userStatusUpdated = async (req, res) => {
                   data: result,
                 });
               }
-            });
-         
+            }
+          );
         }
       });
     }
@@ -584,5 +584,21 @@ exports.getUsers = async (req, res) => {
       success: false,
       message: err.message,
     });
+  }
+};
+const order = require("../models/order");
+
+exports.getdriver = async (req, res) => {
+  try {
+    const id = req.user._id;
+    const data = await order.find({ driver: id ,status:"completed"},{distance:1,star:1,customer:1});
+    req.user.rating = data;
+    res.status(200).json({
+      success: true,
+      message: "User profile get successfully",
+      data: req.user,
+    });
+  } catch (err) {
+    res.status(400).send({ message: err.message, success: false });
   }
 };

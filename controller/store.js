@@ -167,7 +167,7 @@ exports.addproduct = async (req, res) => {
       res.status(200).send({ message: "id is not specify", success: false });
     } else {
       collection.findOne({ _id: id }, async (err, result) => {        
-        console.log(result)
+        
         if (result) {
           await product.updateOne({_id: req.body.product},{collection_name: id})
 

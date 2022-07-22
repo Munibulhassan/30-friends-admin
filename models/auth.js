@@ -25,6 +25,8 @@ const auth = mongoose.Schema(
     interval:{type:String,enum:["monthly","annual"]},
     ends_at:String,
     response_rate:{type:Number},
+    star:{type:Number},
+
     user_type: {
       type: String,
       enum: [

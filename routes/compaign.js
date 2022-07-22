@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
 const router = () => {
   Router.post("/", upload.single('file'), verifytoken,compaign.createcompaign);  
   Router.get("/", compaign.getcompaign);
-  Router.patch("/:id",  compaign.updatecompaign);
+  Router.patch("/:id",upload.single('file'),  compaign.updatecompaign);
   Router.delete("/:id", compaign.deletecompaign);  
 
  

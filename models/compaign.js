@@ -5,11 +5,12 @@ const compaign = mongoose.Schema({
   image:String,
    heading:String,
    text:String,
-   from:String,
-   to:String,
+   from:{type:Date},
+   to:{type:Date},
+   status:{type:String, default:"open",enum:["open","closed"]},
    user:{ type: mongoose.Schema.Types.ObjectId, ref: "users"},
-   products: [{ type: [mongoose.Schema.Types.ObjectId], ref: "product"}],
-   participants: [{ type:[ mongoose.Schema.Types.ObjectId], ref: "users" }]
+   products: { type: [mongoose.Schema.Types.ObjectId], ref: "product"},
+   participants: { type:[ mongoose.Schema.Types.ObjectId], ref: "users" }
 
 
 

@@ -9,8 +9,9 @@ const router = () => {
   Router.get("/", order.getorder);
   Router.patch("/:id",  order.updateorder);
   Router.delete("/:id", order.deleteorder);  
+  Router.patch("/review/:id",order.driverreview)
 
-  Router.post("/assignorder", order.assignorder);//rider
+  Router.patch("/assignorder/:id", order.assignorder);//rider
   Router.patch('/reject/:id', order.rejectorder) //vendor
   Router.patch('/delivered/:id', order.deliveredorder) //rider
   Router.patch('/completed/:id', order.completedorder) //customer
