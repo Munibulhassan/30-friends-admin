@@ -74,8 +74,10 @@ exports.getProduct = async (req, res) => {
     } else {
       const products = data;
       data.map((item, index) => {
+        console.log(item?._id,req.user
+          )
         likes.findOne(
-          { product: item._id, user: req.user._id },
+          { product: item._id, user: req.user?._id },
           (err, result) => {
             if (result != null) {
               products[index].like = true;
