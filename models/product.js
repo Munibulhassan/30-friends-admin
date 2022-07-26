@@ -43,7 +43,7 @@ const product = mongoose.Schema(
       type: Array,
     },
     vendor: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
-    likes: { type: Number, default: 0 },
+    
     comments: { type: Number, default: 0 },
   },
   { timestamps: true }

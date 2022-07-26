@@ -108,7 +108,6 @@ exports.login = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const id = req.user._id;
-    
 
     if (!id) {
       res.status(200).send({ message: "id is not specify", success: false });
@@ -155,29 +154,36 @@ exports.emailVerify = async (req, res) => {
 
     if (otp) {
       authentication.findOne(
-        { email: email, e_otp: otp, is_email_verify: false },
+        { email: email, e_otp: otp },
         async (err, result) => {
           if (result) {
-            authentication.updateOne(
-              { email: email },
-              { is_email_verify: true, e_otp: 0 },
-              async (err, result) => {
-                if (result) {
-                  res.status(200).send({
-                    message: "Email Verified Successfully",
-                    success: false,
-                  });
-                } else {
-                  res.status(200).send({
-                    message: "Invalid email or OTP",
-                    success: false,
-                  });
+            if (result.is_email_verify) {
+              res.status(200).send({
+                message: "Email Already Verified",
+                success: false,
+              });
+            } else {
+              authentication.updateOne(
+                { email: email },
+                { is_email_verify: true, e_otp: 0 },
+                async (err, result) => {
+                  if (result) {
+                    res.status(200).send({
+                      message: "Email Verified Successfully",
+                      success: false,
+                    });
+                  } else {
+                    res.status(200).send({
+                      message: "Invalid email or OTP",
+                      success: false,
+                    });
+                  }
                 }
-              }
-            );
+              );
+            }
           } else {
             res.status(200).send({
-              message: "Invalid email or OTP",
+              message: "Invalid email",
               success: false,
             });
           }
@@ -186,11 +192,11 @@ exports.emailVerify = async (req, res) => {
     } else {
       let OTP = Math.floor(1000 + Math.random() * 9000);
       let transporter = nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 587,
-        secure: false,
-        requireTLS: false,
-
+        // host: "smtp.gmail.com",
+        // port: 587,
+        // secure: false,
+        // requireTLS: false,
+        service: "SendGrid",
         auth: {
           user: process.env.email, // generated ethereal user
           pass: process.env.password, // generated ethereal password
@@ -264,10 +270,7 @@ exports.phoneVerify = async (req, res) => {
       });
     } else {
       authentication.findOne({ email, phone }, async (err, result) => {
-        
         if (!result) {
-          
-
           const Authentication = new authentication({
             email: email,
             phone: phone,
@@ -591,7 +594,10 @@ const order = require("../models/order");
 exports.getdriver = async (req, res) => {
   try {
     const id = req.user._id;
-    const data = await order.find({ driver: id ,status:"completed"},{distance:1,star:1,customer:1});
+    const data = await order.find(
+      { driver: id, status: "completed" },
+      { distance: 1, star: 1, customer: 1 }
+    );
     req.user.rating = data;
     res.status(200).json({
       success: true,
@@ -600,5 +606,32 @@ exports.getdriver = async (req, res) => {
     });
   } catch (err) {
     res.status(400).send({ message: err.message, success: false });
+  }
+};
+exports.getprofile = async (req, res) => {
+  try {
+    const id = req.user._id;
+    var data = await authentication
+      .findOne({
+        _id: id,
+      })
+      .populate("subscription")
+      .exec();
+
+    order.count({ customer: id }, (err, value) => {
+
+
+      res.status(200).json({
+        success: true,
+        message: "You get your Profile Successfully",
+        data: Object.assign(data,{"orders":value}),
+      });
+      
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };

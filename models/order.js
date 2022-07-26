@@ -3,18 +3,23 @@ const order = mongoose.Schema(
   {
     customer: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
     driver: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
-    product: { type: mongoose.Schema.Types.ObjectId, ref: "product" },
+    product:[ { type: mongoose.Schema.Types.ObjectId, ref: "product" }],
 
     status: {
       type: String,
-      enum: ["pending", "assigned", "delivered", "completed", "rejected"],
-      default: "pending",
+      enum: ["On hold", "Processing", "pending payment", "completed", "rejected"],
+      default: "On hold",
     },
     reason: { type: String },
-    quantity: { type: Number },
+    quantity: [{ type: Number }],
+    discount: [{ type: Number }],
+    shipping: [{ type: Number }],
+    amount: { type: Number},
+    payment_method :{type: String},
     varient: {},
     orderid: { type: String, unique: true },
-    address: { type: String },
+    billing_address: { type: String },
+    shipping_address: { type: String },
     note: { type: String },
     costomerlatitude:{type:Number},
     costomerlongitude:{type:Number},
@@ -24,6 +29,7 @@ const order = mongoose.Schema(
     dropofftime: { type: Date },
     distance: { type: Number },
     star: { type: Number },
+    file:{type:String}
   },
   { timestamps: true }
 );

@@ -1,11 +1,9 @@
 const fs = require("fs");
-const { promisify } = require("util");
 const conversation = require("../models/conversation");
-
 const order = require("../models/order");
-
 const Product = require("../models/product");
 var crypto = require("crypto");
+const support = require("../models/support");
 
 exports.createorder = async (req, res) => {
   try {
@@ -33,11 +31,11 @@ exports.createorder = async (req, res) => {
                   message: err.message,
                 });
               } else {
-                req.body.orderid = "ORD"+crypto.randomBytes(4).toString('hex');;
+                req.body.orderid =
+                  "ORD" + crypto.randomBytes(4).toString("hex");
+                req.body.file = req.file.filename;
                 const Order = new order(req.body);
                 Order.save().then(async (item) => {
-                  
-                  
                   res.status(200).send({
                     message: "Thank you for your order",
                     data: item,
@@ -97,9 +95,13 @@ exports.updateorder = async (req, res) => {
         if (!result) {
           res.status(200).send({ message: "No Data Exist", success: false });
         } else {
-          if (req.body.quantity) {
+          if (req.file) {
+            await unlinkAsync(`uploads/order/` + result.file);
+            req.body.file = req.file.filename;
+          }
+          if (req.body?.quantity) {
             const product = await Product.findOne({ _id: result.product });
-            
+
             if (product.stock + result.quantity > req.body.quantity) {
               product.stock =
                 product.stock + result.quantity - req.body.quantity;
@@ -126,12 +128,10 @@ exports.updateorder = async (req, res) => {
                 success: false,
               });
             }
-          }else{
+          } else {
             order.updateOne({ _id: id }, req.body, (err, result) => {
               if (err) {
-                res
-                  .status(200)
-                  .send({ message: err.message, success: false });
+                res.status(200).send({ message: err.message, success: false });
               } else {
                 res.status(200).send({
                   message: "Data updated Successfully",
@@ -159,22 +159,23 @@ exports.deleteorder = async (req, res) => {
     } else {
       order.findOne({ _id: id }, async (err, result) => {
         if (result) {
-          if (result.status != "pending") {
+          if (result.status != "On hold") {
             res.status(200).json({
               message: "Order cannot be cancelled",
               success: false,
             });
           } else {
-          order.deleteOne({ _id: id }, (err, val) => {
-            if (!val) {
-              res.status(200).send({ message: err.message, success: false });
-            } else {
-              res.status(200).send({
-                message: "Data deleted Successfully",
-                success: true,
-              });
-            }
-          })}
+            order.deleteOne({ _id: id }, (err, val) => {
+              if (!val) {
+                res.status(200).send({ message: err.message, success: false });
+              } else {
+                res.status(200).send({
+                  message: "Data deleted Successfully",
+                  success: true,
+                });
+              }
+            });
+          }
         } else {
           res.status(200).send({ message: "Order Not exist", success: false });
         }
@@ -196,7 +197,7 @@ exports.rejectorder = async (req, res) => {
     } else {
       order.findOne({ _id: id }, async (err, result) => {
         if (result) {
-          if (result.status != "pending") {
+          if (result.status != "On hold") {
             res.status(200).json({
               message: "Order cannot be cancelled",
               success: false,
@@ -237,7 +238,7 @@ exports.assignorder = async (req, res) => {
     const { id } = req.params;
     order.findOne({ _id: id }, async (err, result) => {
       if (result) {
-        if (result.status != "pending") {
+        if (result.status != "On hold") {
           res.status(200).json({
             success: false,
             message: "Order cannot be assigned",
@@ -245,9 +246,11 @@ exports.assignorder = async (req, res) => {
         } else {
           order.updateOne(
             { _id: id },
-            { driver: req.body._id || req.user._id, status: "assigned" ,
-            pickuptime:new Date()
-          },
+            {
+              driver: req.body._id || req.user._id,
+              status: "Processing",
+              pickuptime: new Date(),
+            },
             async (err, value) => {
               if (value) {
                 const Conversation = new conversation({
@@ -283,7 +286,7 @@ exports.deliveredorder = async (req, res) => {
     const { id } = req.params;
     order.findOne({ _id: id }, async (err, result) => {
       if (result) {
-        if (result.status != "assigned") {
+        if (result.status != "Processing") {
           res.status(200).json({
             success: false,
             message: "Order cannot be deliverd",
@@ -291,7 +294,7 @@ exports.deliveredorder = async (req, res) => {
         } else {
           order.updateOne(
             { _id: id },
-            { status: "delivered" ,dropofftime:new Date()},
+            { status: "pending payment", dropofftime: new Date() },
             async (err, value) => {
               if (value) {
                 res.status(200).json({
@@ -323,7 +326,7 @@ exports.completedorder = async (req, res) => {
     const { id } = req.params;
     order.findOne({ _id: id }, async (err, result) => {
       if (result) {
-        if (result.status != "delivered") {
+        if (result.status != "pending payment") {
           res.status(200).json({
             success: false,
             message: "Order cannot be Completed",
@@ -331,7 +334,7 @@ exports.completedorder = async (req, res) => {
         } else {
           order.updateOne(
             { _id: id },
-            { status: "completed",distance:req.body.distance },
+            { status: "completed", distance: req.body.distance },
             async (err, value) => {
               if (value) {
                 res.status(200).json({
@@ -391,6 +394,59 @@ exports.driverreview = async (req, res) => {
       } else {
         res.status(200).end({ message: "order Not exist", success: false });
       }
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+exports.createsupport = async (req, res) => {
+  try {
+    const { category, priority, product, issue, order } = req.body;
+    if (!(category && priority && product && issue && order)) {
+      res
+        .status(200)
+        .send({ message: "All input is required", success: false });
+    } else {
+      support.findOne({ user: req.user._id, order: order }, (err, result) => {
+        if (result) {
+          res.status(200).json({
+            success: false,
+            message: "You already take support tick on behalf of this order",
+          });
+        } else {
+          req.body.user = req.user._id;
+          const Support = new support(req.body);
+          Support.save().then((item) => {
+            res
+              .status(200)
+              .send({
+                message: "You support ticket is issued",
+                success: true,
+                data: item,
+              });
+          });
+        }
+      });
+    }
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+exports.getsupport = async (req, res) => {
+  try {
+    Object.assign(req.query, { user: req.user._id });
+    const data = await support.find(req.query);
+    res.status(200).json({
+      success: true,
+      message: "Support get Successfully",
+      data: data,
     });
   } catch (err) {
     res.status(400).json({

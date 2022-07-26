@@ -1,5 +1,5 @@
 const  mongoose = require("mongoose");
-const likes = mongoose.Schema({
+const wishlist = mongoose.Schema({
     user:{ type: mongoose.Schema.Types.ObjectId, ref: "users"},
     product:{ type: mongoose.Schema.Types.ObjectId, ref: "product"}   ,
     
@@ -7,6 +7,6 @@ const likes = mongoose.Schema({
 { timestamps: true }
 );
 
-module.exports = mongoose.model("likes", likes);
+module.exports = mongoose.model("wishlist", wishlist);
 
 

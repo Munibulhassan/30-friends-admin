@@ -33,7 +33,7 @@ const router = () => {
   Router.get("/sociallogin", (req, res) => {
     res.render("../view/facebook.ejs");
   });
-
+Router.get("/myprofile",verifytoken,auth.getprofile)
   //google
   Router.get(
     "/google",

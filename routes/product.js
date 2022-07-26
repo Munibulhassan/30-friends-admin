@@ -31,8 +31,8 @@ const router = () => {
   Router.delete('/comment/:id',product.deletecomment)
 
   ///like
-  Router.post('/like',product.createlike)
-  Router.get('/like',product.getlike)
+  Router.post('/wishlist',verifytoken,product.createwishlist)
+  Router.get('/wishlist',verifytoken,product.getwishlist)
   // Router.patch('/like/:id',product.updatelike)
   // Router.delete('/like/:id',product.deletelike)
 

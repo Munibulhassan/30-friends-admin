@@ -2,7 +2,7 @@ const fs = require("fs");
 const { promisify } = require("util");
 const unlinkAsync = promisify(fs.unlink);
 const product = require("../models/product");
-const likes = require("../models/like");
+const wishlist = require("../models/wishlist");
 
 exports.createProduct = async (req, res) => {
   try {
@@ -72,28 +72,13 @@ exports.getProduct = async (req, res) => {
     if (data.length == 0) {
       res.status(200).send({ message: "Data Not Exist", success: false });
     } else {
-      const products = data;
-      data.map((item, index) => {
-        console.log(item?._id,req.user
-          )
-        likes.findOne(
-          { product: item._id, user: req.user?._id },
-          (err, result) => {
-            if (result != null) {
-              products[index].like = true;
-            } else {
-              products[index].like = false;
-            }
-            if (index == data.length - 1) {
-              res.status(200).send({
-                message: "Data get Successfully",
-                success: true,
-                data: products,
-              });
-            }
-          }
-        );
+      res.status(200).send({
+        message: "Data get Successfully",
+        success: true,
+        data: data,
       });
+     
+     
     }
   } catch (err) {
     res.status(400).json({
@@ -254,7 +239,7 @@ exports.publishProduct = async (req, res) => {
 const Comment = require("../models/comment");
 
 const { resourceLimits } = require("worker_threads");
-const like = require("../models/like");
+const like = require("../models/wishlist");
 
 exports.createcomment = async (req, res) => {
   try {
@@ -407,61 +392,36 @@ exports.deletecomment = async (req, res) => {
 };
 
 ///likes
-exports.createlike = async (req, res) => {
+exports.createwishlist= async (req, res) => {
   try {
-    const { user } = req.body;
+    const user  = req.user._id;
     const Product = req.body.product;
     if (!(user && Product)) {
       res
         .status(200)
         .json({ message: "All input is required", success: false });
     } else {
-      like.findOne({ user: user, product: Product }, async (err, result) => {
+      wishlist.findOne({ user: user, product: Product }, async (err, result) => {
         if (result) {
-          await like.deleteOne({ user: user, product: Product });
-          product.updateOne(
-            { _id: Product },
-            { $inc: { likes: -1, "metrics.orders": 1 } },
-            async (err, update) => {
-              if (err) {
-                res.status(200).json({
-                  success: false,
-                  message: err.message,
-                });
-              } else {
-                res.status(200).json({
-                  message: "product unlike successfully",
-                  success: true,
-                });
-              }
-            }
-          );
+          await wishlist.deleteOne({ user: user, product: Product });
+          res.status(200).json({
+            message: "product successfully remove from wishlist",
+            success: true,
+          });
+         
         } else {
-          const Like = new like({
+          const Wishlist = new wishlist({
             user: user,
             product: Product,
           });
-
-          product.updateOne(
-            { _id: Product },
-            { $inc: { likes: 1, "metrics.orders": 1 } },
-            async (err, update) => {
-              if (err) {
-                res.status(200).json({
-                  success: false,
-                  message: err.message,
-                });
-              } else {
-                await Like.save().then((data) => {
-                  res.status(200).json({
-                    success: true,
-                    message: "Product likes Successfully",
-                    data: data,
-                  });
-                });
-              }
-            }
-          );
+          await Wishlist.save().then((data) => {
+            res.status(200).json({
+              success: true,
+              message: "Product successfully add in wishlist ",
+              data: data,
+            });
+          });
+         
         }
       });
     }
@@ -472,14 +432,17 @@ exports.createlike = async (req, res) => {
     });
   }
 };
-exports.getlike = async (req, res) => {
+exports.getwishlist = async (req, res) => {
   try {
-    like.find(req.query, (err, result) => {
+     
+    req.query = Object.assign(req.query,{"user":req.user._id})
+    
+    wishlist.find(req.query, (err, result) => {
       if (result.length < 0) {
         res.status(200).send({ message: "Data Not Exist", success: false });
       } else {
         res.status(200).send({
-          message: "Data get Successfully",
+          message: "wishlist get Successfully",
           success: true,
           data: result,
         });
