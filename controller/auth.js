@@ -12,6 +12,9 @@ const client = new twilio(process.env.accountSid, process.env.authToken);
 
 exports.register = async (req, res) => {
   try {
+    if(req.params.path=="admin"){
+      req.body.status = true
+    }
     const { first_name, last_name, email, phone, city, state, password } =
       req.body;
     var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
@@ -39,7 +42,7 @@ exports.register = async (req, res) => {
         const value = await authentication.findOne({ phone: phone });
         if (data || value) {
           res.status(200).json({
-            message: "User already exist with same email address",
+            message: "User already exist with same email address or phone",
 
             success: false,
           });

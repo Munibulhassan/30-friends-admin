@@ -3,7 +3,7 @@ const Router = express.Router();
 const product = require("../controller/product");
 const multer = require("multer");
 const path = require("path");
-const { verifyadmintoken, verifytoken } = require("../middleware/auth");
+const { verifyadmintoken, verifybuyertoken,verifytoken } = require("../middleware/auth");
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/product/");
@@ -31,10 +31,12 @@ const router = () => {
   Router.delete('/comment/:id',product.deletecomment)
 
   ///like
-  Router.post('/wishlist',verifytoken,product.createwishlist)
-  Router.get('/wishlist',verifytoken,product.getwishlist)
+  Router.post('/wishlist',verifybuyertoken,product.createwishlist)
+  Router.get('/wishlist',verifybuyertoken,product.getwishlist)
   // Router.patch('/like/:id',product.updatelike)
   // Router.delete('/like/:id',product.deletelike)
+
+
 
 
 

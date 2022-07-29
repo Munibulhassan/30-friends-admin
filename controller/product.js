@@ -6,7 +6,7 @@ const wishlist = require("../models/wishlist");
 
 exports.createProduct = async (req, res) => {
   try {
-    const { title, SKU, tags, description, price, stock, brand, vendor } =
+    const { title, SKU, tags, description, sale_price, stock, brand, vendor } =
       req.body;
     if (
       !(
@@ -14,7 +14,7 @@ exports.createProduct = async (req, res) => {
         SKU &&
         tags &&
         description &&
-        price &&
+        sale_price &&
         stock &&
         brand &&
         vendor
@@ -26,16 +26,14 @@ exports.createProduct = async (req, res) => {
     } else {
       if (req.files) {
         req.body.image = [];
-        req.body.video = [];
-
         req.files.map((item) => {
-          if (item?.mimetype?.split("/")[0] == "video") {
-            req.body.video.push(item.filename);
-          } else {
-            req.body.image.push(item.filename);
-          }
+          req.body.image.push(item.filename);
         });
       }
+      req.body.upsells = JSON.parse(req.body.upsells);
+      req.body.crosssells = JSON.parse(req.body.crosssells);
+      req.body.customize = JSON.parse(req.body.customize);
+      req.body.tags = JSON.parse(req.body.tags);
 
       const Product = new product(req.body);
       Product.save().then((item) => {
@@ -77,8 +75,6 @@ exports.getProduct = async (req, res) => {
         success: true,
         data: data,
       });
-     
-     
     }
   } catch (err) {
     res.status(400).json({
@@ -194,7 +190,6 @@ exports.publishProduct = async (req, res) => {
       res.status(200).send({ message: "id is not specify", success: false });
     } else {
       product.findOne({ _id: id }, async (err, result) => {
-        
         if (req?.user?._id != result?.vendor) {
           res.status(200).send({
             message: "Only Vendor of this product can update product details",
@@ -239,7 +234,7 @@ exports.publishProduct = async (req, res) => {
 const Comment = require("../models/comment");
 
 const { resourceLimits } = require("worker_threads");
-const like = require("../models/wishlist");
+
 
 exports.createcomment = async (req, res) => {
   try {
@@ -392,38 +387,40 @@ exports.deletecomment = async (req, res) => {
 };
 
 ///likes
-exports.createwishlist= async (req, res) => {
+exports.createwishlist = async (req, res) => {
   try {
-    const user  = req.user._id;
+    
+    const user = req.user._id;
     const Product = req.body.product;
     if (!(user && Product)) {
       res
         .status(200)
         .json({ message: "All input is required", success: false });
     } else {
-      wishlist.findOne({ user: user, product: Product }, async (err, result) => {
-        if (result) {
-          await wishlist.deleteOne({ user: user, product: Product });
-          res.status(200).json({
-            message: "product successfully remove from wishlist",
-            success: true,
-          });
-         
-        } else {
-          const Wishlist = new wishlist({
-            user: user,
-            product: Product,
-          });
-          await Wishlist.save().then((data) => {
+      wishlist.findOne(
+        { user: user, product: Product },
+        async (err, result) => {
+          if (result) {
+            await wishlist.deleteOne({ user: user, product: Product });
             res.status(200).json({
+              message: "product successfully remove from wishlist",
               success: true,
-              message: "Product successfully add in wishlist ",
-              data: data,
             });
-          });
-         
+          } else {
+            const Wishlist = new wishlist({
+              user: user,
+              product: Product,
+            });
+            await Wishlist.save().then((data) => {
+              res.status(200).json({
+                success: true,
+                message: "Product successfully add in wishlist ",
+                data: data,
+              });
+            });
+          }
         }
-      });
+      );
     }
   } catch (err) {
     res.status(400).json({
@@ -434,9 +431,8 @@ exports.createwishlist= async (req, res) => {
 };
 exports.getwishlist = async (req, res) => {
   try {
-     
-    req.query = Object.assign(req.query,{"user":req.user._id})
-    
+    req.query = Object.assign(req.query, { user: req.user._id });
+
     wishlist.find(req.query, (err, result) => {
       if (result.length < 0) {
         res.status(200).send({ message: "Data Not Exist", success: false });

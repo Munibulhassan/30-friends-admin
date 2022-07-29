@@ -72,7 +72,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 ///
-
+///google
 const user = require("./models/auth");
 const GoogleStrategy = require("passport-google-oauth2").Strategy;
 passport.use(

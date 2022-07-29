@@ -17,7 +17,11 @@ const router = () => {
   ///user Routes
 
   Router.post("/login", auth.login);
+  Router.post("/register/:path", auth.register);
   Router.post("/register", auth.register);
+
+  
+
 
   Router.post("/emailVerify", auth.emailVerify);
   Router.post("/phoneVerify", auth.phoneVerify);

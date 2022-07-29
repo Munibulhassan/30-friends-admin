@@ -1,10 +1,43 @@
 const mongoose = require("mongoose");
 const product = mongoose.Schema(
   {
-    title: {
+    regular_price: { type: Number },
+    sale_price: { type: Number },
+    sale_start: { type: Date },
+    sale_end: { type: Date },
+    tax_status: { type: String, enum: ["taxable", "shipping only", "none"] },
+    tax_class: {
+      type: String,
+      enum: ["standard", "zero rate", "reduced rate"],
+    },
+
+    SKU: {
       type: String,
     },
-    SKU: {
+    availability: { type: Date },
+    stock: { type: Number },
+    shipping_class: { type: String, enum: ["delivery on same day", "none"] },
+    weight: { type: Number },
+    length: { type: Number },
+    width: { type: Number },
+    height: { type: Number },
+upsells:[{ type: mongoose.Schema.Types.ObjectId, ref: "product" }],
+crosssells:[{ type: mongoose.Schema.Types.ObjectId, ref: "product" }],
+customize :{type:{}},
+note: {
+  type: String,
+},
+ISBN: {
+  type: String,
+},
+
+review:{type:Boolean},
+video: {
+  type: String,
+},
+
+
+    title: {
       type: String,
     },
     brand: { type: mongoose.Schema.Types.ObjectId, ref: "brand" },
@@ -12,36 +45,33 @@ const product = mongoose.Schema(
       type: Array,
       default: [],
     },
-    short_description: { type: String },
-    full_description: { type: String },
+    description: { type: String },
+    
     subcategories: { type: mongoose.Schema.Types.ObjectId, ref: "subcategory" },
     categories: { type: mongoose.Schema.Types.ObjectId, ref: "category" },
     brands: { type: mongoose.Schema.Types.ObjectId, ref: "brand" },
     store: { type: mongoose.Schema.Types.ObjectId, ref: "store" },
-    collection_name: { type: mongoose.Schema.Types.ObjectId, ref:  "collection" },
-    customization: { type: Boolean },
+    collection_name: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "collection",
+    },
+    commision_mode: { type:String,enum : ["percent","fixed"]},
+    commision: { type:Number},
+
+    
     status: {
       type: String,
       default: "pending",
       enum: ["draft", "pending", "published", "archived"],
     },
     is_approved: { type: Boolean, default: false },
-    regular_price: { type: Number },
-    discounted_price: { type: Number },
-    stock: { type: Number },
-    weight: { type: String },
-    length: { type: String },
-    breadth: { type: String },
-    height: { type: String },
+    
     warranty: { type: String },
-    varient: { type: {} },
-
-    image: {
-      type: Array,
-    },
-    video: {
-      type: Array,
-    },
+    
+    image: [{
+      type: String,
+    }],
+  
     vendor: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
     
     comments: { type: Number, default: 0 },

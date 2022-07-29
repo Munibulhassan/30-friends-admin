@@ -19,7 +19,7 @@ const auth = mongoose.Schema(
     city: String,
     e_otp: Number,
     p_otp: Number,
-    status : {type:Boolean, default: true},
+    status : {type:Boolean, default: false},
     endsAt:{type:Date},
     subscription:{type:mongoose.Schema.Types.ObjectId, ref: "subscription"},
     interval:{type:String,enum:["monthly","annual"]},

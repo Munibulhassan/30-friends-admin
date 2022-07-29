@@ -4,6 +4,79 @@ const order = require("../models/order");
 const Product = require("../models/product");
 var crypto = require("crypto");
 const support = require("../models/support");
+const cart = require("../models/addtocart");
+exports.createcart = async (req, res) => {
+  try {
+    const { product, quantity, amount, subtotal, total } = req.body;
+    if (!(product && quantity && subtotal && amount && total)) {
+      res
+        .status(200)
+        .send({ message: "All input is required", success: false });
+    } else {
+      req.body.user = req.user._id;
+      const Cart = new cart(req.body);
+      Cart.save().then((item) => {
+        res
+          .status(200)
+          .send({
+            message: "Product is successfully add",
+            success: true,
+            data: item,
+          });
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+exports.updatecart = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = await cart.findOne({ user: req.user._id, _id: id });
+    if (!data) {
+      res.status(200).send({ message: "Invalid id", success: false });
+    } else {
+      cart.updateOne({ _id: id }, req.body, (err, result) => {
+        
+        if (result) {
+          res
+            .status(200)
+            .send({ message: "Data updated Successfully", success: true });
+        } else {
+          res.status(200).send({ message: "Error Occured", success: false });
+        }
+      });
+    }
+ 
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+exports.getcart = async (req, res) => {
+  try {
+    const data = await cart.find({ user: req.user._id });
+    res
+      .status(200)
+      .send({
+        message: "Cart data fetch successfully",
+        success: true,
+        data: data,
+      });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
 
 exports.createorder = async (req, res) => {
   try {
@@ -33,7 +106,10 @@ exports.createorder = async (req, res) => {
               } else {
                 req.body.orderid =
                   "ORD" + crypto.randomBytes(4).toString("hex");
-                req.body.file = req.file.filename;
+                  if(req.file){
+
+                    req.body.file = req.file.filename;
+                  }
                 const Order = new order(req.body);
                 Order.save().then(async (item) => {
                   res.status(200).send({
@@ -421,13 +497,11 @@ exports.createsupport = async (req, res) => {
           req.body.user = req.user._id;
           const Support = new support(req.body);
           Support.save().then((item) => {
-            res
-              .status(200)
-              .send({
-                message: "You support ticket is issued",
-                success: true,
-                data: item,
-              });
+            res.status(200).send({
+              message: "You support ticket is issued",
+              success: true,
+              data: item,
+            });
           });
         }
       });

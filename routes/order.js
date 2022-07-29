@@ -34,6 +34,10 @@ const router = () => {
    
   Router.post("/support",verifytoken,order.createsupport)
   Router.get("/support",verifytoken,order.getsupport)
+////
+Router.post('/cart',verifytoken,order.createcart)
+Router.get('/cart',verifytoken,order.getcart)
+Router.patch('/cart/:id',verifytoken,order.updatecart)
 
 
 
