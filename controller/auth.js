@@ -4,7 +4,11 @@ const {
   registerSchema,
 } = require("../middleware/validationSchema");
 var bcrypt = require("bcryptjs");
-const { tokengenerate } = require("../middleware/auth");
+const {
+  tokengenerate,
+  verifytoken,
+  verifyrefertoken,
+} = require("../middleware/auth");
 const nodemailer = require("nodemailer");
 // const { Auth } = require("two-step-auth");
 const twilio = require("twilio");
@@ -12,11 +16,15 @@ const client = new twilio(process.env.accountSid, process.env.authToken);
 
 exports.register = async (req, res) => {
   try {
-    if(req.params.path=="admin"){
-      req.body.status = true
-    }
-    const { first_name, last_name, email, phone, city, state, password } =
-      req.body;
+    if (req.params.path == "admin") {
+      req.body.status = true;
+    } else {
+      if (req.params.path.length > 0) {
+        const temp = verifyrefertoken(req.params.path);
+        req.body.user_type = temp.user_type;
+        req.body.referrer = temp.referrer;
+      }}
+    const { first_name, last_name, email, phone, city, state, password } = req.body;
     var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
     if (
       !(first_name && last_name && email && phone && city && state && password)
@@ -32,7 +40,7 @@ exports.register = async (req, res) => {
       var characters =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
       var charactersLength = characters.length;
-      for (var i = 0; i < 5; i++) {
+      for (var i = 0; i < 8; i++) {
         result += characters.charAt(
           Math.floor(Math.random() * charactersLength)
         );
@@ -49,6 +57,22 @@ exports.register = async (req, res) => {
         } else {
           var salt = bcrypt.genSaltSync(10);
           req.body.password = bcrypt.hashSync(req.body.password, salt);
+          if (req.body.user_type == "affiliate") {
+            req.body.buyer_link =
+              process.env.domain +
+              "/register/" +
+              tokengenerate({
+                user_type: "buyer",
+                referrer: result,
+              });
+            req.body.vendor_link =
+              process.env.domain +
+              "/register/" +
+              tokengenerate({
+                user_type: "vendor",
+                referrer: result,
+              });
+          }
           const Authentication = new authentication(req.body);
           Authentication.save().then((item) => {
             item.password = "";
@@ -89,12 +113,19 @@ exports.login = async (req, res) => {
           });
         } else if (bcrypt.compareSync(password, result.password)) {
           result.password = "";
-          res.status(200).send({
-            message: "Login Successfull",
-            success: true,
-            token: tokengenerate(result),
-            data: result,
-          });
+          if (result.status == true) {
+            res.status(200).send({
+              message: "Login Successfull",
+              success: true,
+              token: tokengenerate(result),
+              data: result,
+            });
+          } else {
+            res.status(200).send({
+              message: "User is blocked by admin",
+              success: false,
+            });
+          }
         } else {
           res.status(200).send({ message: "Password invalid", success: false });
         }
@@ -154,6 +185,7 @@ exports.updateProfile = async (req, res) => {
 exports.emailVerify = async (req, res) => {
   try {
     const { email, otp } = req.body;
+    console.log(email)
 
     if (otp) {
       authentication.findOne(
@@ -195,20 +227,25 @@ exports.emailVerify = async (req, res) => {
     } else {
       let OTP = Math.floor(1000 + Math.random() * 9000);
       let transporter = nodemailer.createTransport({
-        // host: "smtp.gmail.com",
-        // port: 587,
-        // secure: false,
-        // requireTLS: false,
-        service: "SendGrid",
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+        
+        // service: "SendGrid",
+        // auth: {
+        //   user: process.env.email, // generated ethereal user
+        //   pass: process.env.password, // generated ethereal password
+        // },
         auth: {
-          user: process.env.email, // generated ethereal user
-          pass: process.env.password, // generated ethereal password
+          user: "oipdummy@gmail.com", // generated ethereal user
+          pass: "rimgrsvekbsqgman", // generated ethereal password
+          
         },
       });
       const mailOption = {
-        from: process.env.email,
+        from: "oipdummy@gmail.com",
         to: email, // sender address
-        subject: "Invoice for your order", // Subject line
+        subject: "Verification token", // Subject line
         html: `<p> Your Vrificaton  code is  <b> ${OTP}</b></p>`,
       };
 
@@ -622,14 +659,11 @@ exports.getprofile = async (req, res) => {
       .exec();
 
     order.count({ customer: id }, (err, value) => {
-
-
       res.status(200).json({
         success: true,
         message: "You get your Profile Successfully",
-        data: Object.assign(data,{"orders":value}),
+        data: Object.assign(data, { orders: value }),
       });
-      
     });
   } catch (err) {
     res.status(400).json({

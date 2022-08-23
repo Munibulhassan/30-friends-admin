@@ -10,6 +10,8 @@ const product = mongoose.Schema(
       type: String,
       enum: ["standard", "zero rate", "reduced rate"],
     },
+    product_type: { type: String, enum: ["simple", "group", "variable"] },
+    // attribute: [{ type: mongoose.Schema.Types.ObjectId, ref: "attribute" }],
 
     SKU: {
       type: String,
@@ -21,21 +23,20 @@ const product = mongoose.Schema(
     length: { type: Number },
     width: { type: Number },
     height: { type: Number },
-upsells:[{ type: mongoose.Schema.Types.ObjectId, ref: "product" }],
-crosssells:[{ type: mongoose.Schema.Types.ObjectId, ref: "product" }],
-customize :{type:{}},
-note: {
-  type: String,
-},
-ISBN: {
-  type: String,
-},
+    upsells: [{ type: mongoose.Schema.Types.ObjectId, ref: "product" }],
+    crosssells: [{ type: mongoose.Schema.Types.ObjectId, ref: "product" }],
+    variation: [],
+    note: {
+      type: String,
+    },
+    ISBN: {
+      type: String,
+    },
 
-review:{type:Boolean},
-video: {
-  type: String,
-},
-
+    review: { type: Boolean },
+    video: {
+      type: String,
+    },
 
     title: {
       type: String,
@@ -46,7 +47,7 @@ video: {
       default: [],
     },
     description: { type: String },
-    
+
     subcategories: { type: mongoose.Schema.Types.ObjectId, ref: "subcategory" },
     categories: { type: mongoose.Schema.Types.ObjectId, ref: "category" },
     brands: { type: mongoose.Schema.Types.ObjectId, ref: "brand" },
@@ -55,25 +56,26 @@ video: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "collection",
     },
-    commision_mode: { type:String,enum : ["percent","fixed"]},
-    commision: { type:Number},
+    commision_mode: { type: String, enum: ["percent", "fixed"] },
+    commision: { type: Number },
 
-    
     status: {
       type: String,
       default: "pending",
       enum: ["draft", "pending", "published", "archived"],
     },
     is_approved: { type: Boolean, default: false },
-    
+
     warranty: { type: String },
-    
-    image: [{
-      type: String,
-    }],
-  
+
+    image: [
+      {
+        type: String,
+      },
+    ],
+
     vendor: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
-    
+
     comments: { type: Number, default: 0 },
   },
   { timestamps: true }

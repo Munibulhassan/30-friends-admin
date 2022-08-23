@@ -26,6 +26,8 @@ const auth = mongoose.Schema(
     ends_at:String,
     response_rate:{type:Number},
     star:{type:Number},
+    buyer_link :{type:String},
+    vendor_link :{type:String},
 
     user_type: {
       type: String,
@@ -34,7 +36,7 @@ const auth = mongoose.Schema(
         "buyer",
         "vendor",
         "delivery",
-        "Affiliate",
+        "affiliate",
         "vendor_support",
         "customer_support",
         "logistics",

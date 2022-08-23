@@ -3,8 +3,7 @@ const mongoose = require("mongoose");
 const subscription = mongoose.Schema(
   {
     name: String,
-    amount: Number,
-    
+    amount: Number,   
   },
   { timestamps: true }
 );

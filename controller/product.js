@@ -32,7 +32,8 @@ exports.createProduct = async (req, res) => {
       }
       req.body.upsells = JSON.parse(req.body.upsells);
       req.body.crosssells = JSON.parse(req.body.crosssells);
-      req.body.customize = JSON.parse(req.body.customize);
+      if(req.body.variation){
+      req.body.variation = JSON.parse(req.body.variation);}
       req.body.tags = JSON.parse(req.body.tags);
 
       const Product = new product(req.body);
@@ -121,6 +122,11 @@ exports.updateProduct = async (req, res) => {
               }
             });
           }
+          console.log(req.body)
+          // if(req.body.variation)
+          // {
+          //   req.body.variation = JSON.parse(req?.body?.variation)
+          // }
           product.updateOne({ _id: id }, req.body, (err, result) => {
             if (err) {
               res.status(200).send({ message: err.message, success: false });

@@ -12,6 +12,7 @@ const conversation = require("./conversation");
 const message = require("./message");
 const compaign = require("./compaign");
 const following = require("./following");
+const attribute = require("./attribute");
 app.get('/call', (req, res)=>{
     res.render('../view/call.ejs')
 })
@@ -26,6 +27,8 @@ app.use("/conversation",conversation)
 app.use("/message",message)
 app.use("/compaign",compaign)
 app.use("/following",following)
+app.use("/attribute",attribute)
+
 
 
 

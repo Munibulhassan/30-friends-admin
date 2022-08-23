@@ -77,5 +77,8 @@ const verifybuyertoken = (req, res, next) => {
   }
   return next();
 };
-
-module.exports = { tokengenerate, verifytoken, verifyadmintoken ,verifybuyertoken};
+const verifyrefertoken = (data)=>{
+  
+  return jwt.verify(data, process.env.SECRET).user;
+}
+module.exports = { tokengenerate, verifytoken, verifyadmintoken ,verifybuyertoken,verifyrefertoken};
