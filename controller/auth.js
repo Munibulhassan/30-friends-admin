@@ -113,19 +113,19 @@ exports.login = async (req, res) => {
           });
         } else if (bcrypt.compareSync(password, result.password)) {
           result.password = "";
-          if (result.status == true) {
-            res.status(200).send({
-              message: "Login Successfull",
-              success: true,
-              token: tokengenerate(result),
-              data: result,
-            });
-          } else {
-            res.status(200).send({
-              message: "User is blocked by admin",
-              success: false,
-            });
-          }
+          res.status(200).send({
+            message: "Login Successfull",
+            success: true,
+            token: tokengenerate(result),
+            data: result,
+          });
+          // if (result.status == true) {
+          // } else {
+          //   res.status(200).send({
+          //     message: "User is blocked by admin",
+          //     success: false,
+          //   });
+          // }
         } else {
           res.status(200).send({ message: "Password invalid", success: false });
         }
