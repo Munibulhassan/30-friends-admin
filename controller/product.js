@@ -15,9 +15,7 @@ exports.createProduct = async (req, res) => {
         tags &&
         description &&
         sale_price &&
-        stock &&
-        brand &&
-        vendor
+        stock &&                vendor
       )
     ) {
       res
@@ -32,8 +30,12 @@ exports.createProduct = async (req, res) => {
       }
       req.body.upsells = JSON.parse(req.body.upsells);
       req.body.crosssells = JSON.parse(req.body.crosssells);
-      if(req.body.variation){
-      req.body.variation = JSON.parse(req.body.variation);}
+      if(req.body.customize){
+        console.log(req.body.customize)
+        req.body.customize = JSON.parse(req.body.customize);
+      }
+      console.log(req.body.customize)
+
       req.body.tags = JSON.parse(req.body.tags);
 
       const Product = new product(req.body);
@@ -55,10 +57,10 @@ exports.createProduct = async (req, res) => {
 
 exports.getProduct = async (req, res) => {
   try {
-    const { page, limit } = req.query;
-
+    const { page, limit,...query } = req.query;
+console.log(query)
     const data = await product
-      .find(req.query)
+      .find(query)
       .populate({ path: "categories" })
       .populate({
         path: "vendor",
@@ -74,7 +76,8 @@ exports.getProduct = async (req, res) => {
       res.status(200).send({
         message: "Data get Successfully",
         success: true,
-        data: data,
+        count:data.length,
+        data: data
       });
     }
   } catch (err) {

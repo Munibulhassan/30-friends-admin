@@ -37,7 +37,7 @@ const product = mongoose.Schema(
     video: {
       type: String,
     },
-
+    customize:[],
     title: {
       type: String,
     },
