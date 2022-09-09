@@ -16,18 +16,21 @@ const client = new twilio(process.env.accountSid, process.env.authToken);
 
 exports.register = async (req, res) => {
   try {
+    
     if (req.params.path == "admin") {
       req.body.status = true;
     } else {
-      if (req.params.path.length > 0) {
+      if (req.params?.path?.length > 0) {
         const temp = verifyrefertoken(req.params.path);
         req.body.user_type = temp.user_type;
         req.body.referrer = temp.referrer;
-      }}
-    const { first_name, last_name, email, phone, city, state, password } = req.body;
+      }
+    }
+    const { first_name, last_name, email, phone, city, state, password } =
+      req.body;
     var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
     if (
-      !(first_name && last_name && email && phone && city && state && password)
+      !(first_name && last_name && email && phone &&  password)
     ) {
       res
         .status(200)
@@ -45,9 +48,13 @@ exports.register = async (req, res) => {
           Math.floor(Math.random() * charactersLength)
         );
       }
+      if (req.file) {
+        req.body.profileimg = req.file.filename;
+      }
       req.body.referal_code = result;
       authentication.findOne({ email: email }, async (err, data) => {
         const value = await authentication.findOne({ phone: phone });
+
         if (data || value) {
           res.status(200).json({
             message: "User already exist with same email address or phone",
@@ -87,6 +94,7 @@ exports.register = async (req, res) => {
       });
     }
   } catch (err) {
+    console.log(err)
     res.status(400).json({
       success: false,
       message: err.message,
@@ -96,41 +104,46 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     if (!(email && password)) {
       res
         .status(200)
         .send({ message: "All input is required", success: false });
-    }
-    await loginSchema.validateAsync(req.body);
-    authentication.findOne({ email: email }, (err, result) => {
-      if (!result) {
-        res.status(200).send({ message: "User not Exist", success: false });
-      } else {
-        if (!result.password) {
-          res.status(200).send({
-            message: "first register yourseld",
-            success: false,
-          });
-        } else if (bcrypt.compareSync(password, result.password)) {
-          result.password = "";
-          res.status(200).send({
-            message: "Login Successfull",
-            success: true,
-            token: tokengenerate(result),
-            data: result,
-          });
-          // if (result.status == true) {
-          // } else {
-          //   res.status(200).send({
-          //     message: "User is blocked by admin",
-          //     success: false,
-          //   });
-          // }
+    } else {
+      await loginSchema.validateAsync(req.body);
+      authentication.findOne({ email: email }, (err, result) => {
+        if (!result) {
+          res.status(200).send({ message: "User not Exist", success: false });
         } else {
-          res.status(200).send({ message: "Password invalid", success: false });
+          if (!result.password) {
+            res.status(200).send({
+              message: "first register yourseld",
+              success: false,
+            });
+          } else if (bcrypt.compareSync(password, result.password)) {
+            result.password = "";
+            result.id = result._id
+            res.status(200).send({
+              message: "Login Successfull",
+              success: true,
+              token: tokengenerate(result),
+              data: result,
+            });
+            // if (result.status == true) {
+            // } else {
+            //   res.status(200).send({
+            //     message: "User is blocked by admin",
+            //     success: false,
+            //   });
+            // }
+          } else {
+            res
+              .status(200)
+              .send({ message: "Password invalid", success: false });
+          }
         }
-      }
-    });
+      });
+    }
   } catch (err) {
     res.status(400).json({
       success: false,
@@ -150,11 +163,11 @@ exports.updateProfile = async (req, res) => {
         if (!result) {
           res.status(200).send({ message: "No USer Exist", success: false });
         } else {
-          // if (req.file) {
-          //   await unlinkAsync(`uploads/category/` + result.image);
+          if (req.file) {
+            await unlinkAsync(`uploads/user/` + result.profileimg);
 
-          //   req.body.image = req.file.filename;
-          // }
+            req.body.profileimg = req.file.filename;
+          }
           if (req.body.password || req.body.email) {
             res
               .status(200)
@@ -185,7 +198,7 @@ exports.updateProfile = async (req, res) => {
 exports.emailVerify = async (req, res) => {
   try {
     const { email, otp } = req.body;
-    console.log(email)
+    console.log(email);
 
     if (otp) {
       authentication.findOne(
@@ -230,7 +243,7 @@ exports.emailVerify = async (req, res) => {
         host: "smtp.gmail.com",
         port: 465,
         secure: true,
-        
+
         // service: "SendGrid",
         // auth: {
         //   user: process.env.email, // generated ethereal user
@@ -239,7 +252,6 @@ exports.emailVerify = async (req, res) => {
         auth: {
           user: "oipdummy@gmail.com", // generated ethereal user
           pass: "rimgrsvekbsqgman", // generated ethereal password
-          
         },
       });
       const mailOption = {
@@ -276,96 +288,110 @@ exports.emailVerify = async (req, res) => {
     });
   }
 };
+var springedge = require('springedge');
 
 exports.phoneVerify = async (req, res) => {
   try {
-    const { email, phone, otp } = req.body;
-    let OTP = Math.floor(1000 + Math.random() * 9000);
-    if (otp) {
-      authentication.findOne({ email, phone }, (err, result) => {
-        if (!result) {
-          res.status(200).send({
-            message: "Invalid phone or token",
-            success: false,
-          });
-        } else {
-          if (result.is_phone_verify == true && result.phone == phone) {
-            res.status(200).send({
-              message: "Phone is already verify",
-              success: false,
-            });
-          } else {
-            authentication.updateOne(
-              { email, phone },
-              { is_phone_verify: true, p_otp: 0 },
-              (err, val) => {
-                res.status(200).send({
-                  message: "Phone is verified successfully",
-                  success: true,
-                });
-              }
-            );
-          }
+    var params = { 
+      'sender': 'SEDEMO', 'apikey': '6on957rb36978j0rl148a6j226v03jmr', 'to': req.body.phone,
+      'message': 'Hi, this is a test message', 'format': 'json' };
+      springedge.messages.send(params, 5000, function (err, response) {
+        if (err) {
+          return console.log(err);
         }
+        res.status(200).send({
+          message: "Phone is verified successfully",
+          success: true,
+        });
+        console.log(response);
       });
-    } else {
-      authentication.findOne({ email, phone }, async (err, result) => {
-        if (!result) {
-          const Authentication = new authentication({
-            email: email,
-            phone: phone,
-            is_phone_verify: false,
-            p_otp: OTP,
-          });
-          Authentication.save().then((item) => {
-            client.messages
-              .create({
-                body: `Your Verification OTP is ${OTP}`,
-                to: req.body.phone, // Text this number
-                from: process.env.phone, // From a valid Twilio number
-              })
-              .then((message) =>
-                res.status(200).send({
-                  message: "OTP send to " + phone,
-                  success: true,
-                })
-              );
-          });
-        } else {
-          if (result?.is_phone_verify == true && result?.phone == phone) {
-            res.status(200).send({
-              message: "Phone is already verify",
-              success: false,
-            });
-          } else if (result?.phone != phone) {
-            res.status(200).send({
-              message: "You are trying with another phone no",
-              success: false,
-            });
-          } else {
-            authentication.updateOne(
-              { email: email },
-              { p_otp: OTP },
-              (err, val) => {
-                client.messages
-                  .create({
-                    body: `Your Verification OTP is ${OTP}`,
-                    to: req.body.phone, // Text this number
-                    from: process.env.phone, // From a valid Twilio number
-                  })
-                  .then((message) =>
-                    res.status(200).send({
-                      message: "OTP send to " + phone,
-                      success: true,
-                    })
-                  )
-                  .done();
-              }
-            );
-          }
-        }
-      });
-    }
+    // const { email, phone, otp } = req.body;
+    // let OTP = Math.floor(1000 + Math.random() * 9000);
+    // if (otp) {
+    //   authentication.findOne({ email, phone }, (err, result) => {
+    //     if (!result) {
+    //       res.status(200).send({
+    //         message: "Invalid phone or token",
+    //         success: false,
+    //       });
+    //     } else {
+    //       if (result.is_phone_verify == true && result.phone == phone) {
+    //         res.status(200).send({
+    //           message: "Phone is already verify",
+    //           success: false,
+    //         });
+    //       } else {
+    //         authentication.updateOne(
+    //           { email, phone },
+    //           { is_phone_verify: true, p_otp: 0 },
+    //           (err, val) => {
+    //             res.status(200).send({
+    //               message: "Phone is verified successfully",
+    //               success: true,
+    //             });
+    //           }
+    //         );
+    //       }
+    //     }
+    //   });
+    // } else {
+    //   authentication.findOne({ email, phone }, async (err, result) => {
+    //     if (!result) {
+    //       const Authentication = new authentication({
+    //         email: email,
+    //         phone: phone,
+    //         is_phone_verify: false,
+    //         p_otp: OTP,
+    //       });
+    //       Authentication.save().then((item) => {
+    //         client.messages
+    //           .create({
+    //             body: `Your Verification OTP is ${OTP}`,
+    //             to: req.body.phone, // Text this number
+    //             from: process.env.phone, // From a valid Twilio number
+    //           })
+    //           .then((message) =>
+    //             res.status(200).send({
+    //               message: "OTP send to " + phone,
+    //               success: true,
+    //             })
+    //           );
+    //       });
+    //     } else {
+    //       if (result?.is_phone_verify == true && result?.phone == phone) {
+    //         res.status(200).send({
+    //           message: "Phone is already verify",
+    //           success: false,
+    //         });
+    //       } else if (result?.phone != phone) {
+    //         res.status(200).send({
+    //           message: "You are trying with another phone no",
+    //           success: false,
+    //         });
+    //       } else {
+    //         authentication.updateOne(
+    //           { email: email },
+    //           { p_otp: OTP },
+    //           (err, val) => {
+    //             client.messages
+    //               .create({
+    //                 body: `Your Verification OTP is ${OTP}`,
+    //                 to: req.body.phone, // Text this number
+    //                 from: process.env.phone, // From a valid Twilio number
+    //               })
+    //               .then((message) =>
+    //                 res.status(200).send({
+    //                   message: "OTP send to " + phone,
+    //                   success: true,
+    //                 })
+    //               )
+    //               .done();
+    //           }
+    //         );
+    //       }
+    //     }
+    //   });
+    // }
   } catch (err) {
     res.status(400).json({
       success: false,

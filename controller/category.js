@@ -41,15 +41,17 @@ exports.createcategory = async (req, res) => {
 
 exports.getcategory = async (req, res) => {
   try {
-    const {page,limit}=req.query   
-    
-    const data =await category.find(req.query).limit(limit * 1)
-    .skip((page - 1) * limit)
-    .exec();
-    
-    if(data.length==0){
+    const { page, limit } = req.query;
+
+    const data = await category
+      .find(req.query)
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+
+    if (data.length == 0) {
       res.status(200).send({ message: "Data Not Exist", success: false });
-    }else{
+    } else {
       res.status(200).send({
         message: "Data get Successfully",
         success: true,
@@ -76,7 +78,9 @@ exports.updatecategory = async (req, res) => {
           res.status(200).send({ message: "No Data Exist", success: false });
         } else {
           if (req.file) {
-            await unlinkAsync(`uploads/category/` + result.image);
+            if (result.image) {
+              await unlinkAsync(`uploads/category/` + result.image);
+            }
 
             req.body.image = req.file.filename;
           }
@@ -108,7 +112,7 @@ exports.deletecategory = async (req, res) => {
     if (!id) {
       res.status(200).send({ message: "id is not specify", success: false });
     } else {
-      category.findOne({ _id: id },async (err, result) => {
+      category.findOne({ _id: id }, async (err, result) => {
         if (result) {
           await unlinkAsync(`uploads/category/` + result.image);
 
@@ -173,22 +177,23 @@ exports.createsubcategory = async (req, res) => {
 
 exports.getsubcategory = async (req, res) => {
   try {
-    const {page,limit}=req.query   
-    
-    const data =await subcategory.find(req.query).limit(limit * 1)
-    .skip((page - 1) * limit)
-    .exec();
-    
-    if(data.length==0){
+    const { page, limit } = req.query;
+
+    const data = await subcategory
+      .find(req.query)
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+
+    if (data.length == 0) {
       res.status(200).send({ message: "Data Not Exist", success: false });
-    }else{
+    } else {
       res.status(200).send({
         message: "Data get Successfully",
         success: true,
         data: data,
       });
     }
-  
   } catch (err) {
     res.status(400).json({
       success: false,
@@ -208,7 +213,6 @@ exports.updatesubcategory = async (req, res) => {
         if (!result) {
           res.status(200).send({ message: "No Data Exist", success: false });
         } else {
-          
           if (req.file) {
             await unlinkAsync(`uploads/category/` + result.image);
 
@@ -242,7 +246,7 @@ exports.deletesubcategory = async (req, res) => {
     if (!id) {
       res.status(200).send({ message: "id is not specify", success: false });
     } else {
-      subcategory.findOne({ _id: id },async (err, result) => {
+      subcategory.findOne({ _id: id }, async (err, result) => {
         if (result) {
           await unlinkAsync(`uploads/category/` + result.image);
 
@@ -311,22 +315,23 @@ exports.createbrand = async (req, res) => {
 
 exports.getbrand = async (req, res) => {
   try {
-    const {page,limit}=req.query   
-    
-    const data =await brand.find(req.query).limit(limit * 1)
-    .skip((page - 1) * limit)
-    .exec();
-    
-    if(data.length==0){
+    const { page, limit } = req.query;
+
+    const data = await brand
+      .find(req.query)
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+
+    if (data.length == 0) {
       res.status(200).send({ message: "Data Not Exist", success: false });
-    }else{
+    } else {
       res.status(200).send({
         message: "Data get Successfully",
         success: true,
         data: data,
       });
     }
-    
   } catch (err) {
     res.status(400).json({
       success: false,

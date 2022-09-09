@@ -37,19 +37,20 @@ const product = mongoose.Schema(
     video: {
       type: String,
     },
-    customize:[],
+    customize: [],
     title: {
       type: String,
     },
     brand: { type: mongoose.Schema.Types.ObjectId, ref: "brand" },
     tags: {
-      type: Array,
-      default: [],
+      type: mongoose.Schema.Types.ObjectId, ref: "tags"
     },
-    description: { type: String },
+    short_description: { type: String },
+    long_description: { type: String },
 
-    subcategories: { type: mongoose.Schema.Types.ObjectId, ref: "subcategory" },
-    categories: { type: mongoose.Schema.Types.ObjectId, ref: "category" },
+
+    subcategory: { type: mongoose.Schema.Types.ObjectId, ref: "subcategory" },
+    category: { type: mongoose.Schema.Types.ObjectId, ref: "category" },
     brands: { type: mongoose.Schema.Types.ObjectId, ref: "brand" },
     store: { type: mongoose.Schema.Types.ObjectId, ref: "store" },
     collection_name: {
@@ -73,7 +74,7 @@ const product = mongoose.Schema(
         type: String,
       },
     ],
-
+    product_type: { type: String, enum: ["simple", "variable"] },
     vendor: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
 
     comments: { type: Number, default: 0 },

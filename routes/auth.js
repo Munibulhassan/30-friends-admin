@@ -3,7 +3,21 @@ const Router = express.Router();
 const auth = require("../controller/auth");
 const passport = require("passport");
 const { verifytoken, verifyadmintoken } = require("../middleware/auth");
+const multer = require("multer");
+const path = require("path");
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/user/");
+  },
+  filename: function (req, file, cb) {
+    cb(
+      null,
+      file.fieldname + "-" + Date.now() + path.extname(file.originalname)
+    );
+  },
+});
 
+var upload = multer({ storage: storage });
 const router = () => {
   passport.serializeUser(function (user, done) {
     done(null, user.id);
@@ -17,8 +31,8 @@ const router = () => {
   ///user Routes
 
   Router.post("/login", auth.login);
-  Router.post("/register/:path", auth.register);
-  Router.post("/register", auth.register);
+  Router.post("/register/:path",upload.single("file"), auth.register);
+  Router.post("/register",upload.single("file"), auth.register);
 
   
 
@@ -28,7 +42,7 @@ const router = () => {
 
   Router.post("/forgotPassword", auth.forgotPassword);
   Router.post("/resetPassword", auth.resetPassword);
-  Router.post("/updateProfile", verifytoken,auth.updateProfile);
+  Router.post("/updateProfile",upload.single("file"), verifytoken,auth.updateProfile);
   Router.get("/driverprofile",verifytoken, auth.getdriver)
 
 

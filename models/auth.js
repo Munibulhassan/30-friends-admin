@@ -8,6 +8,7 @@ const auth = mongoose.Schema(
     googleId:String,
     facebookId:String,
     userId: String,
+    profileimg:String,
     is_email_verify: { type: Boolean, default: false },
     is_phone_verify: { type: Boolean, default: false },
     store_link: String,

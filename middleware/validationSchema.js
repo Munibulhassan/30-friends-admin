@@ -15,9 +15,9 @@ const registerSchema = joi.object({
     .required()
     .min(4)
     .max(8),
-  store_link: joi.string().required(),
+  
   user_type: joi.string().required(),
-  city: joi.string().required(),
+  // city: joi.string().required(),
   state: joi.string(),
   phone: joi.string().max(14),
   is_email_verify: joi.boolean(),

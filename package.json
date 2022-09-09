@@ -6,8 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon app.js",
-    "start":"npm run dev"
-
+    "start": "npm run dev"
   },
   "author": "",
   "license": "ISC",
@@ -24,6 +23,7 @@
     "ejs": "^3.1.8",
     "express": "^4.18.1",
     "express-session": "^1.17.3",
+    "fs": "^0.0.1-security",
     "joi": "^17.6.0",
     "jsonwebtoken": "^8.5.1",
     "lazerpay-node-sdk": "^0.2.1",
@@ -36,11 +36,13 @@
     "passport-google-oauth": "^2.0.0",
     "passport-google-oauth2": "^0.2.0",
     "socket.io": "^4.5.1",
+    "springedge": "^1.0.6",
     "twilio": "^3.77.3",
-    "two-step-auth": "^1.1.2"
-  }
-  ,"engines":{
-    "node":"16.15.1",
-    "npm":"8.11.0"
+    "two-step-auth": "^1.1.2",
+    "wbm": "^1.1.16"
+  },
+  "engines": {
+    "node": "16.15.1",
+    "npm": "8.11.0"
   }
 }

@@ -175,6 +175,22 @@ app.set('view engine', 'ejs');
 app.get('/success', (req, res) => res.send("You are a valid user"));
 app.get('/error', (req, res) => res.send("error logging in"));
 
+
+var fs = require("fs");
+app.use(express.static('public')); 
+app.use('/category', express.static('uploads/category'));
+// app.get("/image/:folder/:image", (req, res) => {
+  
+//   const file = fs.createReadStream("src/uploads/"+req.params.folder+"/"+req.params.image)
+//   res.send(file)
+//     // fs.readFile("src/uploads/"+req.params.folder+"/"+req.params.image, function (err, data) {
+//     //   if (err) console.log(err); // Fail if the file can't be read.
+//     //   res.writeHead(200, { "Content-Type": "image/"+req.params.image.split(".")[1] });
+//     //   res.end(data); // Send the file data to the browser.
+//     // });
+//   });
+  
+
 //server initialize
 const url = process.env.PORT || 5000;
 app.listen(url, () => {

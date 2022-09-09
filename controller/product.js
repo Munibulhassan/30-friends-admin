@@ -9,14 +9,7 @@ exports.createProduct = async (req, res) => {
     const { title, SKU, tags, description, sale_price, stock, brand, vendor } =
       req.body;
     if (
-      !(
-        title &&
-        SKU &&
-        tags &&
-        description &&
-        sale_price &&
-        stock &&                vendor
-      )
+      !(title && SKU && tags && description && sale_price && stock && vendor)
     ) {
       res
         .status(200)
@@ -30,14 +23,11 @@ exports.createProduct = async (req, res) => {
       }
       req.body.upsells = JSON.parse(req.body.upsells);
       req.body.crosssells = JSON.parse(req.body.crosssells);
-      if(req.body.customize){
-        console.log(req.body.customize)
+      if (req.body.customize) {        
         req.body.customize = JSON.parse(req.body.customize);
       }
-      console.log(req.body.customize)
-
+      
       req.body.tags = JSON.parse(req.body.tags);
-
       const Product = new product(req.body);
       Product.save().then((item) => {
         res.status(200).send({
@@ -57,28 +47,57 @@ exports.createProduct = async (req, res) => {
 
 exports.getProduct = async (req, res) => {
   try {
-    const { page, limit,...query } = req.query;
-console.log(query)
-    const data = await product
-      .find(query)
-      .populate({ path: "categories" })
-      .populate({
-        path: "vendor",
-        select: ["endsAt", "interval", "subscription"],
-      })
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .exec();
+    const { page, limit, search, ...query } = req.query;
+    console.log(search);
+    if (search) {
+      const list = await product
+        .find(query)
+        .populate({ path: "categoy" })
+        .populate({ path: "tags" })
 
-    if (data.length == 0) {
-      res.status(200).send({ message: "Data Not Exist", success: false });
-    } else {
-      res.status(200).send({
-        message: "Data get Successfully",
-        success: true,
-        count:data.length,
-        data: data
+        .populate({
+          path: "vendor",
+          select: ["endsAt", "interval", "subscription"],
+        })
+        .limit(limit * 1)
+        .skip((page - 1) * limit)
+        .exec();
+      const data = list.filter((item) => {
+        return item.title.search(search) != -1;
       });
+      console.log(data);
+      if (data.length == 0) {
+        res.status(200).send({ message: "Data Not Exist", success: false });
+      } else {
+        res.status(200).send({
+          message: "Data get Successfully",
+          success: true,
+          count: data.length,
+          data: data,
+        });
+      }
+    } else {
+      const data = await product
+        .find(query)
+        .populate({ path: "category" })
+        .populate({
+          path: "vendor",
+          select: ["endsAt", "interval", "subscription"],
+        })
+        .limit(limit * 1)
+        .skip((page - 1) * limit)
+        .exec();
+
+      if (data.length == 0) {
+        res.status(200).send({ message: "Data Not Exist", success: false });
+      } else {
+        res.status(200).send({
+          message: "Data get Successfully",
+          success: true,
+          count: data.length,
+          data: data,
+        });
+      }
     }
   } catch (err) {
     res.status(400).json({
@@ -125,7 +144,7 @@ exports.updateProduct = async (req, res) => {
               }
             });
           }
-          console.log(req.body)
+          console.log(req.body);
           // if(req.body.variation)
           // {
           //   req.body.variation = JSON.parse(req?.body?.variation)
@@ -243,7 +262,6 @@ exports.publishProduct = async (req, res) => {
 const Comment = require("../models/comment");
 
 const { resourceLimits } = require("worker_threads");
-
 
 exports.createcomment = async (req, res) => {
   try {
@@ -398,7 +416,6 @@ exports.deletecomment = async (req, res) => {
 ///likes
 exports.createwishlist = async (req, res) => {
   try {
-    
     const user = req.user._id;
     const Product = req.body.product;
     if (!(user && Product)) {
@@ -461,6 +478,88 @@ exports.getwishlist = async (req, res) => {
   }
 };
 
+
+const tags = require("../models/tags")
+exports.createtags = async (req,res)=>{
+  try{
+    console.log(req.body.name)
+    const name= req.body.name.toLowerCase();
+    console.log(name)
+    if(!name){
+      res
+      .status(200)
+      .json({ message: "All input is required", success: false });
+    }else{
+
+    }
+    tags.findOne({name:req.body.name},async (err,body)=>{
+
+      if(body){
+        res.status(200).json({
+          message: "tag already exist",
+          success: true,
+        });
+      }else{        
+        const tag = new tags({name:req.body.name})
+        await tag.save().then((data) => {
+          res.status(200).json({
+            success: true,
+            message: "Tags successfully saved",
+            data: data,
+          });
+        })
+      }
+    })
+    
+
+  }catch(err){
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }}
+  
+
+exports.gettags = async (req,res)=>{
+  try{
+    console.log(req.query)
+    
+     tags.find({},(err,result)=>{
+      console.log(result)
+      if(result.length==0){
+        res.status(200).send({ message: "Data Not Exist", success: false });
+
+      }else{
+        
+        res.status(200).send({
+          message: "tags get Successfully",
+          success: true,
+          data: result,
+        });
+      }
+    })
+  }catch(err){
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }}
+  
+exports.updatetags = async (req,res)=>{
+  try{}catch(err){
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }}
+  exports.deletetags = async (req,res)=>{
+    try{}catch(err){
+      res.status(400).json({
+        success: false,
+        message: err.message,
+      });
+    }}
+    
 // exports.updatelike = async (req, res) => {
 //   try {
 //     const { id } = req.params;

@@ -37,6 +37,11 @@ const router = () => {
   // Router.delete('/like/:id',product.deletelike)
 
 
+//tags
+Router.post("/tags",product.createtags)
+Router.get("/tags",product.gettags)
+Router.patch("/tags",product.updatetags)
+Router.delete("/tags",product.deletetags)
 
 
 
