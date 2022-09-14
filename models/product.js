@@ -5,11 +5,13 @@ const product = mongoose.Schema(
     sale_price: { type: Number },
     sale_start: { type: Date },
     sale_end: { type: Date },
+    
     tax_status: { type: String, enum: ["taxable", "shipping only", "none"] },
     tax_class: {
       type: String,
       enum: ["standard", "zero rate", "reduced rate"],
     },
+    free_shipping:{type:Boolean, default:false},
     product_type: { type: String, enum: ["simple", "group", "variable"] },
     // attribute: [{ type: mongoose.Schema.Types.ObjectId, ref: "attribute" }],
 
@@ -42,15 +44,15 @@ const product = mongoose.Schema(
       type: String,
     },
     brand: { type: mongoose.Schema.Types.ObjectId, ref: "brand" },
-    tags: {
+    tags:[ {
       type: mongoose.Schema.Types.ObjectId, ref: "tags"
-    },
+    }],
     short_description: { type: String },
     long_description: { type: String },
 
 
-    subcategory: { type: mongoose.Schema.Types.ObjectId, ref: "subcategory" },
-    category: { type: mongoose.Schema.Types.ObjectId, ref: "category" },
+    subcategory: [{ type: mongoose.Schema.Types.ObjectId, ref: "subcategory" }],
+    category: [{ type: mongoose.Schema.Types.ObjectId, ref: "category" }],
     brands: { type: mongoose.Schema.Types.ObjectId, ref: "brand" },
     store: { type: mongoose.Schema.Types.ObjectId, ref: "store" },
     collection_name: {
@@ -74,7 +76,7 @@ const product = mongoose.Schema(
         type: String,
       },
     ],
-    product_type: { type: String, enum: ["simple", "variable"] },
+    
     vendor: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
 
     comments: { type: Number, default: 0 },

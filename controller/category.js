@@ -38,27 +38,66 @@ exports.createcategory = async (req, res) => {
     });
   }
 };
-
+var product = require("../models/product");
 exports.getcategory = async (req, res) => {
   try {
     const { page, limit } = req.query;
-
-    const data = await category
-      .find(req.query)
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .exec();
-
-    if (data.length == 0) {
-      res.status(200).send({ message: "Data Not Exist", success: false });
-    } else {
-      res.status(200).send({
-        message: "Data get Successfully",
-        success: true,
-        data: data,
+    if (req.query._id) {
+      category.findOne({ _id: req.query._id }, (err, data) => {
+        if (data) {
+          subcategory.find({ category: req.query._id }, async (err, result) => {
+            if (result) {
+              product.find(
+                { category: req.query._id },
+                async (err, product) => {
+                  res.status(200).send({
+                    message: "Data get Successfully",
+                    success: true,
+                    data: {
+                      _id: data._id,
+                      category_name: data.category_name,
+                      image: data.image,
+                      subcategory: result,
+                      createdAt: data.createdAt,
+                      updatedAt: data.updatedAt,
+                      product: product.slice(0,5),
+                    },
+                  });
+                }
+              );
+            } else {
+              res.status(200).json({
+                success: false,
+                message: err.message,
+              });
+            }
+          });
+        } else {
+          res.status(200).json({
+            success: false,
+            message: err.message,
+          });
+        }
       });
+    } else {
+      const data = await category
+        .find(req.query)
+        .limit(limit * 1)
+        .skip((page - 1) * limit)
+        .exec();
+
+      if (data.length == 0) {
+        res.status(200).send({ message: "Data Not Exist", success: false });
+      } else {
+        res.status(200).send({
+          message: "Data get Successfully",
+          success: true,
+          data: data,
+        });
+      }
     }
   } catch (err) {
+    console.log(err);
     res.status(400).json({
       success: false,
       message: err.message,

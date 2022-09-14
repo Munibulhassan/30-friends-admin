@@ -179,6 +179,8 @@ app.get('/error', (req, res) => res.send("error logging in"));
 var fs = require("fs");
 app.use(express.static('public')); 
 app.use('/category', express.static('uploads/category'));
+app.use('/product', express.static('uploads/product'));
+
 // app.get("/image/:folder/:image", (req, res) => {
   
 //   const file = fs.createReadStream("src/uploads/"+req.params.folder+"/"+req.params.image)

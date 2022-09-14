@@ -6,10 +6,26 @@ const wishlist = require("../models/wishlist");
 
 exports.createProduct = async (req, res) => {
   try {
-    const { title, SKU, tags, description, sale_price, stock, brand, vendor } =
-      req.body;
+    const {
+      title,
+      SKU,
+      tags,
+      short_description,
+      sale_price,
+      stock,
+      brand,
+      vendor,
+    } = req.body;
     if (
-      !(title && SKU && tags && description && sale_price && stock && vendor)
+      !(
+        title &&
+        SKU &&
+        tags &&
+        short_description &&
+        sale_price &&
+        stock &&
+        vendor
+      )
     ) {
       res
         .status(200)
@@ -23,10 +39,10 @@ exports.createProduct = async (req, res) => {
       }
       req.body.upsells = JSON.parse(req.body.upsells);
       req.body.crosssells = JSON.parse(req.body.crosssells);
-      if (req.body.customize) {        
+      if (req.body.customize) {
         req.body.customize = JSON.parse(req.body.customize);
       }
-      
+
       req.body.tags = JSON.parse(req.body.tags);
       const Product = new product(req.body);
       Product.save().then((item) => {
@@ -47,25 +63,41 @@ exports.createProduct = async (req, res) => {
 
 exports.getProduct = async (req, res) => {
   try {
-    const { page, limit, search, ...query } = req.query;
-    console.log(search);
-    if (search) {
+    req.query = Object.fromEntries(
+      Object.entries(req.query).filter(
+        ([_, v]) => v != "" && v != " " && v != "null"
+      )
+    );
+    const { page, limit, search, vendor, _id, tags } = req.query;
+    if (req.params.method == "discount") {
       const list = await product
-        .find(query)
-        .populate({ path: "categoy" })
-        .populate({ path: "tags" })
+        .find(req.query)
 
+        .populate({ path: "category" })
+        .populate({ path: "subcategory" })
+        .populate({ path: "tags" })
+        .populate({ path: "brand" })
         .populate({
           path: "vendor",
           select: ["endsAt", "interval", "subscription"],
         })
+        .populate({
+          path: "upsells",
+        })
+        .populate({
+          path: "crosssells",
+        })
         .limit(limit * 1)
         .skip((page - 1) * limit)
         .exec();
+
       const data = list.filter((item) => {
-        return item.title.search(search) != -1;
+        return (
+          ((item.regular_price - item.sale_price) / item.regular_price) * 100 >
+          40
+        );
       });
-      console.log(data);
+
       if (data.length == 0) {
         res.status(200).send({ message: "Data Not Exist", success: false });
       } else {
@@ -77,26 +109,72 @@ exports.getProduct = async (req, res) => {
         });
       }
     } else {
-      const data = await product
-        .find(query)
-        .populate({ path: "category" })
-        .populate({
-          path: "vendor",
-          select: ["endsAt", "interval", "subscription"],
-        })
-        .limit(limit * 1)
-        .skip((page - 1) * limit)
-        .exec();
+      if (search) {
+        const list = await product
+          .find(req.query)
+          .populate({ path: "category" })
+          .populate({ path: "subcategory" })
+          .populate({ path: "tags" })
+          .populate({ path: "brand" })
+          .populate({
+            path: "vendor",
+            select: ["endsAt", "interval", "subscription"],
+          })
+          .populate({
+            path: "upsells",
+          })
+          .populate({
+            path: "crosssells",
+          })
+          .limit(limit * 1)
+          .skip((page - 1) * limit)
+          .exec();
 
-      if (data.length == 0) {
-        res.status(200).send({ message: "Data Not Exist", success: false });
-      } else {
-        res.status(200).send({
-          message: "Data get Successfully",
-          success: true,
-          count: data.length,
-          data: data,
+        const data = list.filter((item) => {
+          return item.title.search(search) != -1;
         });
+
+        if (data.length == 0) {
+          res.status(200).send({ message: "Data Not Exist", data:[],success: true });
+        } else {
+          res.status(200).send({
+            message: "Data get Successfully",
+            success: true,
+            count: data.length,
+            data: data,
+          });
+        }
+      } else {
+        const data = await product
+          .find(req.query)
+
+          .populate({ path: "category" })
+          .populate({ path: "subcategory" })
+          .populate({ path: "tags" })
+          .populate({ path: "brand" })
+          .populate({
+            path: "vendor",
+          })
+          .populate({
+            path: "upsells",
+          })
+          .populate({
+            path: "crosssells",
+          })
+          .limit(limit * 1)
+          .skip((page - 1) * limit)
+          .exec();
+
+        if (data.length == 0) {
+          res.status(200).send({ message: "Data Not Exist", success: false });
+        } else {
+          res.status(200).send({
+            message: "Data get Successfully",
+            success: true,
+            count: data.length,
+            data: data,
+          });
+        }
       }
     }
   } catch (err) {
@@ -144,11 +222,7 @@ exports.updateProduct = async (req, res) => {
               }
             });
           }
-          console.log(req.body);
-          // if(req.body.variation)
-          // {
-          //   req.body.variation = JSON.parse(req?.body?.variation)
-          // }
+
           product.updateOne({ _id: id }, req.body, (err, result) => {
             if (err) {
               res.status(200).send({ message: err.message, success: false });
@@ -478,88 +552,82 @@ exports.getwishlist = async (req, res) => {
   }
 };
 
+const tags = require("../models/tags");
+exports.createtags = async (req, res) => {
+  try {
+    const name = req.body.name.toLowerCase();
 
-const tags = require("../models/tags")
-exports.createtags = async (req,res)=>{
-  try{
-    console.log(req.body.name)
-    const name= req.body.name.toLowerCase();
-    console.log(name)
-    if(!name){
+    if (!name) {
       res
-      .status(200)
-      .json({ message: "All input is required", success: false });
-    }else{
-
+        .status(200)
+        .json({ message: "All input is required", success: false });
+    } else {
     }
-    tags.findOne({name:req.body.name},async (err,body)=>{
-
-      if(body){
+    tags.findOne({ name: req.body.name }, async (err, body) => {
+      if (body) {
         res.status(200).json({
           message: "tag already exist",
           success: true,
         });
-      }else{        
-        const tag = new tags({name:req.body.name})
+      } else {
+        const tag = new tags({ name: req.body.name });
         await tag.save().then((data) => {
           res.status(200).json({
             success: true,
             message: "Tags successfully saved",
             data: data,
           });
-        })
+        });
       }
-    })
-    
-
-  }catch(err){
+    });
+  } catch (err) {
     res.status(400).json({
       success: false,
       message: err.message,
     });
-  }}
-  
+  }
+};
 
-exports.gettags = async (req,res)=>{
-  try{
-    console.log(req.query)
-    
-     tags.find({},(err,result)=>{
-      console.log(result)
-      if(result.length==0){
+exports.gettags = async (req, res) => {
+  try {
+    tags.find({}, (err, result) => {
+      if (result.length == 0) {
         res.status(200).send({ message: "Data Not Exist", success: false });
-
-      }else{
-        
+      } else {
         res.status(200).send({
           message: "tags get Successfully",
           success: true,
           data: result,
         });
       }
-    })
-  }catch(err){
+    });
+  } catch (err) {
     res.status(400).json({
       success: false,
       message: err.message,
     });
-  }}
-  
-exports.updatetags = async (req,res)=>{
-  try{}catch(err){
+  }
+};
+
+exports.updatetags = async (req, res) => {
+  try {
+  } catch (err) {
     res.status(400).json({
       success: false,
       message: err.message,
     });
-  }}
-  exports.deletetags = async (req,res)=>{
-    try{}catch(err){
-      res.status(400).json({
-        success: false,
-        message: err.message,
-      });
-    }}
-    
+  }
+};
+exports.deletetags = async (req, res) => {
+  try {
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
 // exports.updatelike = async (req, res) => {
 //   try {
 //     const { id } = req.params;
