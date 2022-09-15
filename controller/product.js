@@ -68,11 +68,27 @@ exports.getProduct = async (req, res) => {
         ([_, v]) => v != "" && v != " " && v != "null"
       )
     );
-    const { page, limit, search, vendor, _id, tags } = req.query;
+    
+    
+    const { page, limit, search, vendor,status, _id, tags } = req.query;
+    const query = {}
+    if(_id){
+      query._id= _id
+    }
+    if(vendor){
+      query.vendor= vendor
+    }
+    if(req.query.status){
+      query.status= req.query.status
+    }
+    if(tags){
+      query.tags=tags
+    }
+    
+
     if (req.params.method == "discount") {
       const list = await product
-        .find(req.query)
-
+        .find(query)
         .populate({ path: "category" })
         .populate({ path: "subcategory" })
         .populate({ path: "tags" })
@@ -111,7 +127,7 @@ exports.getProduct = async (req, res) => {
     } else {
       if (search) {
         const list = await product
-          .find(req.query)
+          .find(query)
           .populate({ path: "category" })
           .populate({ path: "subcategory" })
           .populate({ path: "tags" })
@@ -135,7 +151,9 @@ exports.getProduct = async (req, res) => {
         });
 
         if (data.length == 0) {
-          res.status(200).send({ message: "Data Not Exist", data:[],success: true });
+          res
+            .status(200)
+            .send({ message: "Data Not Exist", data: [], success: true });
         } else {
           res.status(200).send({
             message: "Data get Successfully",
@@ -145,8 +163,9 @@ exports.getProduct = async (req, res) => {
           });
         }
       } else {
+        
         const data = await product
-          .find(req.query)
+          .find(query)
 
           .populate({ path: "category" })
           .populate({ path: "subcategory" })
@@ -168,6 +187,7 @@ exports.getProduct = async (req, res) => {
         if (data.length == 0) {
           res.status(200).send({ message: "Data Not Exist", success: false });
         } else {
+          
           res.status(200).send({
             message: "Data get Successfully",
             success: true,
@@ -178,6 +198,7 @@ exports.getProduct = async (req, res) => {
       }
     }
   } catch (err) {
+    
     res.status(400).json({
       success: false,
       message: err.message,
@@ -553,6 +574,7 @@ exports.getwishlist = async (req, res) => {
 };
 
 const tags = require("../models/tags");
+const { ConversationPage } = require("twilio/lib/rest/conversations/v1/conversation");
 exports.createtags = async (req, res) => {
   try {
     const name = req.body.name.toLowerCase();
