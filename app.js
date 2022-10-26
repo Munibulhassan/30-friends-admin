@@ -6,7 +6,8 @@ app.use(bodyParser.json());
 const mongoose = require("mongoose");
 
 //Datbase connection
-const MONGOurl = process.env.MONGOURL
+const MONGOurl = process.env.MONGOURL;
+// const MONGOurl = process.env.LOCALMONGOURL;
 mongoose.connect(
   MONGOurl,
   {
@@ -25,50 +26,51 @@ const route = require("./routes/routes");
 //Routing
 app.use("/api", route);
 
-
 app.use(function (req, res, next) {
-  
-  // Website you wish to allow to connect
-  res.setHeader("Access-Control-Allow-Origin", "*");
-
-  // Request methods you wish to allow
+  // res.setHeader(
+  //   "Access-Control-Allow-Headers",
+  //   "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers"
+  // );
+  res.header("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Methods",
     "GET, POST, OPTIONS, PUT, PATCH, DELETE"
   );
 
-  // Request headers you wish to allow
-  res.setHeader(
+  res.header(
     "Access-Control-Allow-Headers",
-    "X-Requested-With,content-type"
+    "X-Requested-With,content-type,application/json"
   );
 
-  // Set to true if you need the website to include cookies in the requests sent
-  // to the API (e.g. in case you use sessions)
   res.setHeader("Access-Control-Allow-Credentials", true);
 
-  // Pass to next layer of middleware
   next();
 });
 
 const cors = require("cors");
 const corsOptions = {
   origin: "*",
-  credentials: true, //access-control-allow-credentials:true
-  optionSuccessStatus: 200,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
 };
-app.use(cors(corsOptions));
-
-
+app.use(
+  cors({
+    corsOptions,
+  })
+);
 
 ///login with google
-const session = require('express-session');
-const passport = require('passport');
-app.use(session({
-  resave: false,
-  saveUninitialized: true,
-  secret: 'SECRET' 
-}));
+const session = require("express-session");
+const passport = require("passport");
+
+app.use(
+  session({
+    resave: false,
+    saveUninitialized: true,
+    secret: "SECRET",
+  })
+);
 app.use(passport.initialize());
 app.use(passport.session());
 ///
@@ -81,11 +83,10 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: "http://localhost:5000/api/auth/google/callback",
-      passReqToCallback : true
+      passReqToCallback: true,
     },
-    function (request, accessToken, refreshToken, profile, done) {      
+    function (request, accessToken, refreshToken, profile, done) {
       user.findOne({ googleId: profile?.id }).then((existingUser) => {
-        
         if (existingUser) {
           return done(null, existingUser);
         } else {
@@ -102,7 +103,7 @@ passport.use(
             googleId: profile.id,
             first_name: profile._json.given_name,
             last_name: profile._json.family_name,
-            is_email_verify:true,
+            is_email_verify: true,
             email: profile.emails[0].value,
             provider: "google",
             referal_code: result,
@@ -120,18 +121,16 @@ passport.use(
   new facebookStrategy(
     {
       // pull in our app id and secret from our auth.js file
-      
-      clientID: process.env.FACEBOOK_CLIENTID ,
+
+      clientID: process.env.FACEBOOK_CLIENTID,
       clientSecret: process.env.FACEBOOK_SECRET,
       callbackURL: "http://localhost:5000/api/auth/facebook/callback",
     }, // facebook will send back the token and profile
     function (token, refreshToken, profile, done) {
       if (profile.emails === undefined) {
-        done('email-required')
+        done("email-required");
         return;
-    }
-      
-
+      }
 
       user.findOne({ facebookId: profile.id }).then((existingUser) => {
         if (existingUser) {
@@ -151,7 +150,7 @@ passport.use(
             facebookId: profile.id,
             first_name: profile?.displayName?.split(" ")[0],
             last_name: profile?.displayName?.split(" ")[1],
-            email: profile?.emails ? profile?.emails[0]?.value: "",
+            email: profile?.emails ? profile?.emails[0]?.value : "",
             provider: "facebook",
             own_ref_code: result,
           })
@@ -164,25 +163,19 @@ passport.use(
 );
 ///
 
-require('./index')
+require("./index");
 
+app.set("view engine", "ejs");
 
-
-
-
-app.set('view engine', 'ejs');
-
-app.get('/success', (req, res) => res.send("You are a valid user"));
-app.get('/error', (req, res) => res.send("error logging in"));
-
-
+app.get("/success", (req, res) => res.send("You are a valid user"));
+app.get("/error", (req, res) => res.send("error logging in"));
 var fs = require("fs");
-app.use(express.static('public')); 
-app.use('/category', express.static('uploads/category'));
-app.use('/product', express.static('uploads/product'));
+app.use(express.static("public"));
+app.use("/category", express.static("uploads/category"));
+app.use("/product", express.static("uploads/product"));
 
 // app.get("/image/:folder/:image", (req, res) => {
-  
+
 //   const file = fs.createReadStream("src/uploads/"+req.params.folder+"/"+req.params.image)
 //   res.send(file)
 //     // fs.readFile("src/uploads/"+req.params.folder+"/"+req.params.image, function (err, data) {
@@ -191,7 +184,6 @@ app.use('/product', express.static('uploads/product'));
 //     //   res.end(data); // Send the file data to the browser.
 //     // });
 //   });
-  
 
 //server initialize
 const url = process.env.PORT || 5000;

@@ -29,6 +29,7 @@
     "lazerpay-node-sdk": "^0.2.1",
     "mongoose": "^6.3.4",
     "multer": "^1.4.5-lts.1",
+    "ngrok": "^4.3.3",
     "nodemailer": "^6.7.5",
     "nodemon": "^2.0.16",
     "passport": "^0.6.0",

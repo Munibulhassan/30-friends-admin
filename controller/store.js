@@ -74,7 +74,7 @@ exports.updatestore = async (req, res) => {
         if (!result) {
           res.status(200).send({ message: "No Data Exist", success: false });
         } else {
-          req.body.field.map(async (item, index) => {
+          req.body.files?.map(async (item, index) => {
             await unlinkAsync(`uploads/store/` + result[item]);
             req.body[item] = req.files[index].filename;
           });
