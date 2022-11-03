@@ -94,7 +94,7 @@ exports.register = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err)
+  
     res.status(400).json({
       success: false,
       message: err.message,
@@ -198,7 +198,7 @@ exports.updateProfile = async (req, res) => {
 exports.emailVerify = async (req, res) => {
   try {
     const { email, otp } = req.body;
-    console.log(email);
+    
 
     if (otp) {
       authentication.findOne(
@@ -303,7 +303,7 @@ exports.phoneVerify = async (req, res) => {
           message: "Phone is verified successfully",
           success: true,
         });
-        console.log(response);
+        
       });
     // const { email, phone, otp } = req.body;
     // let OTP = Math.floor(1000 + Math.random() * 9000);

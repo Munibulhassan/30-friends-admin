@@ -1,8 +1,15 @@
+'use strict';
 const express = require("express");
+const appRoot = require('app-root-path')
+const compression = require('compression');
+
 const app = express();
+const path = require("path");
+
 const bodyParser = require("body-parser");
 require("dotenv").config();
 app.use(bodyParser.json());
+
 const mongoose = require("mongoose");
 
 //Datbase connection
@@ -21,44 +28,39 @@ mongoose.connect(
     }
   }
 );
+const cors = require("cors");
+app.use(
+  cors({
+    origin: "*",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  })
+);
+
+app.use(function (req, res, next) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, OPTIONS, PUT, PATCH, DELETE"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-Requested-With,content-type"
+  );
+  res.setHeader("Access-Control-Allow-Credentials", true);
+  next();
+});
+
 //routes
 const route = require("./routes/routes");
 //Routing
 app.use("/api", route);
 
-app.use(function (req, res, next) {
-  // res.setHeader(
-  //   "Access-Control-Allow-Headers",
-  //   "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers"
-  // );
-  res.header("Access-Control-Allow-Origin", "*");
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-  );
 
-  res.header(
-    "Access-Control-Allow-Headers",
-    "X-Requested-With,content-type,application/json"
-  );
-
-  res.setHeader("Access-Control-Allow-Credentials", true);
-
-  next();
-});
-
-const cors = require("cors");
-const corsOptions = {
-  origin: "*",
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
-};
-app.use(
-  cors({
-    corsOptions,
-  })
-);
+app.use(express.static("views"));
+app.use('/public', express.static(path.join(appRoot.path, "public")));
+app.set("view engine", "ejs");
 
 ///login with google
 const session = require("express-session");

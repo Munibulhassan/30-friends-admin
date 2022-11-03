@@ -13,6 +13,7 @@ const message = require("./message");
 const compaign = require("./compaign");
 const following = require("./following");
 const attribute = require("./attribute");
+
 app.get('/call', (req, res)=>{
     res.render('../view/call.ejs')
 })

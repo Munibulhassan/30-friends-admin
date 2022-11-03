@@ -41,6 +41,7 @@ exports.createcategory = async (req, res) => {
 var product = require("../models/product");
 exports.getcategory = async (req, res) => {
   try {
+    
     const { page, limit } = req.query;
     if (req.query._id) {
       category.findOne({ _id: req.query._id }, (err, data) => {
@@ -97,7 +98,7 @@ exports.getcategory = async (req, res) => {
       }
     }
   } catch (err) {
-    console.log(err);
+  
     res.status(400).json({
       success: false,
       message: err.message,
